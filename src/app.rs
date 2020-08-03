@@ -32,7 +32,7 @@ use crate::helpers::{load_json, load_toml, save_toml, IsHidden};
 use crate::settings::{ButtonScheme, Settings, SETTINGS_PATH, RotationLock};
 use crate::frontlight::{Frontlight, StandardFrontlight, NaturalFrontlight, PremixedFrontlight, FakeFrontlight};
 use crate::lightsensor::{LightSensor, KoboLightSensor};
-use crate::battery::{Battery, FakeBattery};
+use crate::battery::{Battery, RemarkableBattery};
 use crate::geom::{Rectangle, Edge};
 use crate::view::home::Home;
 use crate::view::reader::Reader;
@@ -243,7 +243,7 @@ fn build_context(fb: Box<dyn Framebuffer>) -> Result<Context, Error> {
 
     let fonts = Fonts::load().context("Can't load fonts.")?;
 
-    let battery = Box::new(FakeBattery::new()) as Box<dyn Battery>;
+    let battery = Box::new(RemarkableBattery::new().context("Can't create battery.")?) as Box<dyn Battery>;
 
     let lightsensor = if CURRENT_DEVICE.has_lightsensor() {
         Box::new(KoboLightSensor::new().context("Can't create light sensor.")?) as Box<dyn LightSensor>
