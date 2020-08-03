@@ -16,8 +16,7 @@ seems to be a bit to much, so I'll try to add it
 to plato once I'm finished porting it.
 
 **This repo is wip!** Remarkable-specific setup
-instructions, configuration help, releases and 
-any input are still missing.  
+instructions, configuration help and releases are still missing.  
 If you manage to build it, you'll sit before an blank
 home screen.
 
