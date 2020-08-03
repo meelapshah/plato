@@ -1,5 +1,7 @@
 #! /bin/sh
 
+exit # Stubbed
+
 lsmod | grep -q sdio_wifi_pwr && exit 1
 
 insmod /drivers/"${PLATFORM}"/wifi/sdio_wifi_pwr.ko

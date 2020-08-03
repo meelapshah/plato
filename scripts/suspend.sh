@@ -1,5 +1,7 @@
 #! /bin/sh
 
+exit # Stubbed
+
 # De-activate the touch screen.
 echo 1 > /sys/power/state-extended
 

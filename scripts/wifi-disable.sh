@@ -1,5 +1,7 @@
 #! /bin/sh
 
+exit # Stubbed
+
 lsmod | grep -q sdio_wifi_pwr || exit 1
 
 killall udhcpc default.script wpa_supplicant 2> /dev/null

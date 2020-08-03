@@ -1,5 +1,7 @@
 #! /bin/sh
 
+exit # Stubbed
+
 lsmod | grep -q g_file_storage || exit 1
 
 rmmod g_file_storage
