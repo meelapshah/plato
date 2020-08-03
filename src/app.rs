@@ -47,8 +47,8 @@ use crate::rtc::Rtc;
 pub const APP_NAME: &str = "Plato";
 const FB_DEVICE: &str = "/dev/fb0";
 const RTC_DEVICE: &str = "/dev/rtc0";
-const EVENT_BUTTONS: &str = "/dev/input/event0";
-const EVENT_TOUCH_SCREEN: &str = "/dev/input/event1";
+const EVENT_BUTTONS: &str = "/dev/input/event2"; // reMarkable gpio-keys
+const EVENT_TOUCH_SCREEN: &str = "/dev/input/event1"; // reMarkable cyttsp5_mt (Multitouch)
 const KOBO_UPDATE_BUNDLE: &str = "/mnt/onboard/.kobo/KoboRoot.tgz";
 const KEYBOARD_LAYOUTS_DIRNAME: &str = "keyboard-layouts";
 const DICTIONARIES_DIRNAME: &str = "dictionaries";
@@ -88,6 +88,7 @@ impl Context {
                frontlight: Box<dyn Frontlight>, lightsensor: Box<dyn LightSensor>) -> Context {
         let dims = fb.dims();
         let rotation = CURRENT_DEVICE.transformed_rotation(fb.rotation());
+        println!("FB Rot: {}, Transformed Rot: {}", fb.rotation(), rotation);
         let rng = Xoroshiro128Plus::seed_from_u64(Local::now().timestamp_nanos() as u64);
         Context { fb, rtc, display: Display { dims, rotation },
                   library, settings, fonts, dictionaries: BTreeMap::new(),

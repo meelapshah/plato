@@ -10,9 +10,11 @@ use std::ffi::CString;
 use fxhash::{FxHashMap, FxHashSet};
 use crate::framebuffer::Display;
 use crate::settings::ButtonScheme;
-use crate::device::CURRENT_DEVICE;
+use crate::device::{CURRENT_DEVICE, Model};
 use crate::geom::{Point, LinearDir};
 use anyhow::{Error, Context};
+use libremarkable::input::ecodes;
+use libremarkable::framebuffer::common;
 
 // Event types
 pub const EV_SYN: u16 = 0x00;
@@ -27,9 +29,9 @@ pub const ABS_MT_POSITION_Y: u16 = 0x36;
 pub const ABS_MT_PRESSURE: u16 = 0x3a;
 pub const ABS_MT_TOUCH_MAJOR: u16 = 0x30;
 pub const SYN_MT_REPORT: u16 = 0x02;
-pub const ABS_X: u16 = 0x00;
-pub const ABS_Y: u16 = 0x01;
-pub const ABS_PRESSURE: u16 = 0x18;
+pub const ABS_X: u16 = ecodes::ABS_X; // reMarkable specific
+pub const ABS_Y: u16 = ecodes::ABS_Y; //  reMarkable specific
+pub const ABS_PRESSURE: u16 = ecodes::ABS_PRESSURE; // reMarkable MT Pressure
 pub const MSC_RAW: u16 = 0x03;
 pub const SYN_REPORT: u16 = 0x00;
 
@@ -50,11 +52,11 @@ pub const VAL_PRESS: i32 = 1;
 pub const VAL_REPEAT: i32 = 2;
 
 // Key codes
-pub const KEY_POWER: u16 = 116;
-pub const KEY_HOME: u16 = 102;
-pub const KEY_LIGHT: u16 = 90;
-pub const KEY_BACKWARD: u16 = 193;
-pub const KEY_FORWARD: u16 = 194;
+pub const KEY_POWER: u16 = ecodes::KEY_POWER;
+pub const KEY_HOME: u16 = ecodes::KEY_HOME;
+pub const KEY_LIGHT: u16 = 90; // Unused on reMarkable
+pub const KEY_BACKWARD: u16 = ecodes::KEY_LEFT;
+pub const KEY_FORWARD: u16 = ecodes::KEY_RIGHT;
 // The following key codes are fake, and are used to support
 // software toggles within this design
 pub const KEY_ROTATE_DISPLAY: u16 = 0xffff;
@@ -338,6 +340,13 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
     };
 
     let (mut mirror_x, mut mirror_y) = CURRENT_DEVICE.should_mirror_axes(rotation);
+    // Scale touchscreen of remarkable properly
+    let scale_x = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
+    let scale_y = common::DISPLAYHEIGHT as f32 / common::MTHEIGHT as f32;
+    println!("SX: {}, SY: {}", scale_x, scale_y);
+    /*let scale_x = 1.0;
+    let scale_y = 1.0;*/
+
     if CURRENT_DEVICE.should_swap_axes(rotation) {
         mem::swap(&mut tc.x, &mut tc.y);
     }
@@ -347,21 +356,38 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
             if evt.code == ABS_MT_TRACKING_ID {
+                let last_id = id;
                 id = evt.value;
+                println!("{} -> {}", last_id, id);
                 if proto == TouchProto::MultiB {
                     packet_ids.insert(id);
                 }
+
+                if last_id != -1 && id == -1 {
+                    ty.send(DeviceEvent::Finger {
+                        id: last_id,
+                        time: seconds(evt.time),
+                        status: FingerStatus::Up,
+                        position,
+                    }).unwrap();
+                    println!("Finger {} released", last_id);
+                    fingers.remove(&last_id);
+                }
+
+                
             } else if evt.code == tc.x {
+                let scaled_value = (evt.value as f32 * scale_x) as i32;
                 position.x = if mirror_x {
-                    dims.0 as i32 - 1 - evt.value
+                    dims.0 as i32 - 1 - scaled_value
                 } else {
-                    evt.value
+                    scaled_value
                 };
             } else if evt.code == tc.y {
+                let scaled_value = (evt.value as f32 * scale_y) as i32;
                 position.y = if mirror_y {
-                    dims.1 as i32 - 1 - evt.value
+                    dims.1 as i32 - 1 - scaled_value
                 } else {
-                    evt.value
+                    scaled_value
                 };
             } else if evt.code == tc.pressure {
                 pressure = evt.value;
@@ -373,7 +399,9 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                 last_activity = evt.time.tv_sec;
                 ty.send(DeviceEvent::UserActivity).ok();
             }
-            if evt.code == SYN_MT_REPORT || (proto == TouchProto::Single && evt.code == SYN_REPORT) {
+            // Note: The reMarkable doesnt seem to use SYN_MT_REPORT
+            // even though is is MultiA and MultiB
+            if evt.code == SYN_REPORT {
                 if let Some(&p) = fingers.get(&id) {
                     if pressure > 0 {
                         if p != position {
@@ -384,6 +412,7 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                                 position,
                             }).unwrap();
                             fingers.insert(id, position);
+                            println!("Finger ({}) set to: {:?}", id, position);
                         }
                     } else {
                         ty.send(DeviceEvent::Finger {
@@ -392,16 +421,20 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                             status: FingerStatus::Up,
                             position,
                         }).unwrap();
+                        println!("Finger {} released", id);
                         fingers.remove(&id);
                     }
                 } else {
-                    ty.send(DeviceEvent::Finger {
-                        id,
-                        time: seconds(evt.time),
-                        status: FingerStatus::Down,
-                        position,
-                    }).unwrap();
-                    fingers.insert(id, position);
+                    if id != -1 {
+                        ty.send(DeviceEvent::Finger {
+                            id,
+                            time: seconds(evt.time),
+                            status: FingerStatus::Down,
+                            position,
+                        }).unwrap();
+                        println!("Finger {} pressed", id);
+                        fingers.insert(id, position);
+                    }
                 }
             } else if proto == TouchProto::MultiB && evt.code == SYN_REPORT {
                 fingers.retain(|other_id, other_position| {

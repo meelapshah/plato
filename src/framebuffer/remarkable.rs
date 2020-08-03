@@ -201,7 +201,7 @@ impl Framebuffer for RemarkableFramebuffer {
 
     #[inline]
     fn rotation(&self) -> i8 {
-        self.fb.var_screen_info.rotate as i8
+        0
     }
 
     fn set_rotation(&mut self, n: i8) -> Result<(u32, u32), Error> {
