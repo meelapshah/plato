@@ -33,9 +33,10 @@ cp -R css dist
 find dist/css -name '*-user.css' -delete
 find dist/keyboard-layouts -name '*-user.json' -delete
 find dist/hyphenation-patterns -name '*.bounds' -delete
-cp target/arm-unknown-linux-gnueabihf/release/plato dist/
+cp target/armv7-unknown-linux-gnueabihf/release/plato dist/
 cp contrib/*.sh dist
 
 patchelf --remove-rpath dist/libs/*
 
-arm-linux-gnueabihf-strip dist/plato dist/libs/*
+[ ! -z STRIP ] || STRIP='/usr/local/oecore-x86_64/sysroots/x86_64-oesdk-linux/usr/bin/arm-oe-linux-gnueabi/arm-oe-linux-gnueabi-strip'
+$STRIP dist/plato dist/libs/*

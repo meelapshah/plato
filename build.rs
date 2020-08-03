@@ -4,7 +4,7 @@ fn main() {
     let target = env::var("TARGET").unwrap();
 
     // Cross-compiling for Kobo.
-    if target == "arm-unknown-linux-gnueabihf" {
+    if target == "armv7-unknown-linux-gnueabihf" {
         println!("cargo:rustc-env=PKG_CONFIG_ALLOW_CROSS=1");
         println!("cargo:rustc-link-search=src/mupdf_wrapper/Kobo");
         println!("cargo:rustc-link-search=libs");
