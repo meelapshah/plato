@@ -106,53 +106,58 @@ impl Framebuffer for RemarkableFramebuffer {
         // as they will be far more helpful and practical.
         match mode {
             UpdateMode::FastMono => {
+                println!("Update fastmono");
                  Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
-                    common::waveform_mode::WAVEFORM_MODE_DU, // Impossible to draw rgb pixel with this (kobo uses A2. This should be better)
+                    common::waveform_mode::WAVEFORM_MODE_GLR16,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency (see comments on this)
-                    common::dither_mode::EPDC_FLAG_USE_DITHERING_DRAWING,
+                    common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     0,
                     false,
                 ))
             },
             UpdateMode::Fast => {
+                println!("Update fast");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
-                    common::waveform_mode::WAVEFORM_MODE_GLR16, // A2
-                    common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency (see comments on this)
+                    common::waveform_mode::WAVEFORM_MODE_GLR16,
+                    common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     0,
                     false,
                 ))
             },
             UpdateMode::Gui => {
+                println!("Update gui");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
                     common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Also used by reMarkable for UI (anymore??)
-                    common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency (see comments on this)
+                    common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     0,
                     false,
                 ))
             },
             UpdateMode::Partial => {
+                println!("Update partial");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
-                    PartialRefreshMode::Async,
-                    common::waveform_mode::WAVEFORM_MODE_GLR16,
+                    PartialRefreshMode::Wait,
+                    common::waveform_mode::WAVEFORM_MODE_AUTO,
                     common::display_temp::TEMP_USE_AMBIENT, // Higher latency (see comments on this)
-                    common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+                    common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER, // EPDC_FLAG_USE_REMARKABLE_DITHER leads to problems here!
                     0,
-                    true, // Force full refesh
+                    false,
                 ))
             },
             UpdateMode::Full => {
+                println!("Update full");
                 Ok(self.fb.full_refresh(
                     common::waveform_mode::WAVEFORM_MODE_GC16, // Flashes black white in full mode
-                    common::display_temp::TEMP_USE_MAX, // Not such low latency (see comments on this)
+                    common::display_temp::TEMP_USE_AMBIENT, // Not such low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER, // Good or bad here???
                     0,
                     false, // Don't wait for completion (token should allow the device to do anyway if actually wanted)
