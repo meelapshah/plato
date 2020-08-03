@@ -80,6 +80,7 @@ pub struct Context {
     pub covered: bool,
     pub shared: bool,
     pub online: bool,
+    pub killed_xochitl: bool,
 }
 
 impl Context {
@@ -94,7 +95,7 @@ impl Context {
                   keyboard_layouts: BTreeMap::new(), input_history: FxHashMap::default(),
                   battery, frontlight, lightsensor, notification_index: 0,
                   kb_rect: Rectangle::default(), rng, plugged: false, covered: false,
-                  shared: false, online: false }
+                  shared: false, online: false, killed_xochitl: false }
     }
 
     pub fn batch_import(&mut self) {
@@ -335,6 +336,7 @@ fn set_wifi(enable: bool, context: &mut Context) {
 
 enum ExitStatus {
     Quit,
+    QuitToXochitl,
     Reboot,
     PowerOff,
 }
@@ -434,6 +436,14 @@ pub fn run() -> Result<(), Error> {
 
     schedule_task(TaskId::CheckBattery, Event::CheckBattery,
                   BATTERY_REFRESH_INTERVAL, &tx, &mut tasks);
+
+    if let Ok(status) = Command::new("pidof").arg("xochitl").status() {
+        if status.code().unwrap() == 0 {
+            Command::new("systemctl").arg("stop").arg("xochitl").status().ok();
+            context.killed_xochitl = true;
+            println!("Xochitl was found and killed. You may only exit by starting Xochitl again.")
+        }
+    }
 
     while let Ok(evt) = rx.recv() {
         match evt {
@@ -1047,6 +1057,10 @@ pub fn run() -> Result<(), Error> {
             Event::Select(EntryId::Quit) => {
                 break;
             },
+            Event::Select(EntryId::QuitToXochitl) => {
+                exit_status = ExitStatus::QuitToXochitl;
+                break;
+            },
             Event::Select(EntryId::RebootInNickel) => {
                 fs::remove_file("bootlock").map_err(|e| {
                     eprintln!("Couldn't remove the bootlock file: {}", e);
@@ -1100,6 +1114,10 @@ pub fn run() -> Result<(), Error> {
         ExitStatus::PowerOff => {
             Command::new("sync").status().ok();
             Command::new("poweroff").arg("-f").status().ok();
+        },
+        ExitStatus::QuitToXochitl => {
+            Command::new("sync").status().ok();
+            Command::new("systemctl").arg("start").arg("xochitl").status().ok();
         },
         _ => (),
     }

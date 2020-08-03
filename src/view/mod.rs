@@ -513,6 +513,7 @@ pub enum EntryId {
     Reboot,
     RebootInNickel,
     Quit,
+    QuitToXochitl,
 }
 
 impl EntryKind {
