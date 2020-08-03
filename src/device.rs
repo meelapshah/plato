@@ -24,6 +24,7 @@ pub enum Model {
     Glo,
     TouchC,
     TouchAB,
+    Remarkable,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -54,6 +55,7 @@ impl fmt::Display for Model {
             Model::Glo           => write!(f, "Glo"),
             Model::TouchC        => write!(f, "Touch C"),
             Model::TouchAB       => write!(f, "Touch A/B"),
+            Model::Remarkable    => write!(f, "reMarkable Gen 1"),
         }
     }
 }
@@ -71,6 +73,7 @@ pub enum FrontlightKind {
     Standard,
     Natural,
     Premixed,
+    Fake,
 }
 
 impl Device {
@@ -154,6 +157,12 @@ impl Device {
                 dims: (1264, 1680),
                 dpi: 300,
             },
+            "remarkable" => Device {
+                model: Model::Remarkable,
+                proto: TouchProto::MultiB,
+                dims: (1872, 1404),
+                dpi: 223,
+            },
             _ => Device {
                 model: if model_number == "320" { Model::TouchC } else { Model::TouchAB },
                 proto: TouchProto::Single,
@@ -173,6 +182,7 @@ impl Device {
             Model::Forma |
             Model::Forma32GB |
             Model::LibraH2O => FrontlightKind::Premixed,
+            Model::Remarkable => FrontlightKind::Fake,
             _ => FrontlightKind::Standard,
         }
     }
@@ -238,6 +248,10 @@ impl Device {
         }
     }
 
+    /// Seems to be some kind of "version" for some framebuffer stuff.
+    /// Note: Really, I don't know it either, but it played a role in some
+    /// of that stuff (which I don't care about, since I can just use
+    /// libremarkable instead).
     pub fn mark(&self) -> u8 {
         match self.model {
             Model::LibraH2O |
@@ -259,6 +273,7 @@ impl Device {
             Model::Glo |
             Model::TouchC => 4,
             Model::TouchAB => 3,
+            Model::Remarkable => 3, // Shouldn't matter
         }
     }
 
