@@ -283,7 +283,6 @@ impl Device {
         let my = (4 + (mxy - dir)) % 4;
         let mirror_x = mxy == rotation || mx == rotation;
         let mirror_y = mxy == rotation || my == rotation;
-        println!("Mirror X: {}, Mirror Y: {}, Rot: {}", mirror_x, mirror_y, rotation);
         (mirror_x, mirror_y)
     }
 
@@ -294,18 +293,7 @@ impl Device {
             Model::AuraH2OEd2V2 => (0, -1),
             Model::Forma | Model::Forma32GB => (2, -1),
             Model::LibraH2O => (3, 1),
-            Model::Remarkable => {
-                /*let mut line = String::new();
-                std::io::stdin().read_line(&mut line).unwrap();
-                let center: i8 = line.trim().parse().unwrap();
-                line.clear();
-                std::io::stdin().read_line(&mut line).unwrap();
-                let direction: i8 = line.trim().parse().unwrap();
-
-                println!("Center: {}, Direction: {}", center, direction);
-                (center, direction)*/
-                (2, 2)
-            }
+            Model::Remarkable => (2, 2),
             _ => (2, 1),
         }
     }

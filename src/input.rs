@@ -343,9 +343,6 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
     // Scale touchscreen of remarkable properly
     let scale_x = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
     let scale_y = common::DISPLAYHEIGHT as f32 / common::MTHEIGHT as f32;
-    println!("SX: {}, SY: {}", scale_x, scale_y);
-    /*let scale_x = 1.0;
-    let scale_y = 1.0;*/
 
     if CURRENT_DEVICE.should_swap_axes(rotation) {
         mem::swap(&mut tc.x, &mut tc.y);
@@ -358,11 +355,12 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
             if evt.code == ABS_MT_TRACKING_ID {
                 let last_id = id;
                 id = evt.value;
-                println!("{} -> {}", last_id, id);
                 if proto == TouchProto::MultiB {
                     packet_ids.insert(id);
                 }
 
+                // This is reMarkables way of saying a finger was
+                // releases. Weird..
                 if last_id != -1 && id == -1 {
                     ty.send(DeviceEvent::Finger {
                         id: last_id,
@@ -370,7 +368,6 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                         status: FingerStatus::Up,
                         position,
                     }).unwrap();
-                    println!("Finger {} released", last_id);
                     fingers.remove(&last_id);
                 }
 
@@ -412,7 +409,6 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                                 position,
                             }).unwrap();
                             fingers.insert(id, position);
-                            println!("Finger ({}) set to: {:?}", id, position);
                         }
                     } else {
                         ty.send(DeviceEvent::Finger {
@@ -421,7 +417,6 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                             status: FingerStatus::Up,
                             position,
                         }).unwrap();
-                        println!("Finger {} released", id);
                         fingers.remove(&id);
                     }
                 } else {
@@ -432,7 +427,6 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                             status: FingerStatus::Down,
                             position,
                         }).unwrap();
-                        println!("Finger {} pressed", id);
                         fingers.insert(id, position);
                     }
                 }

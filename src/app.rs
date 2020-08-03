@@ -88,7 +88,6 @@ impl Context {
                frontlight: Box<dyn Frontlight>, lightsensor: Box<dyn LightSensor>) -> Context {
         let dims = fb.dims();
         let rotation = CURRENT_DEVICE.transformed_rotation(fb.rotation());
-        println!("FB Rot: {}, Transformed Rot: {}", fb.rotation(), rotation);
         let rng = Xoroshiro128Plus::seed_from_u64(Local::now().timestamp_nanos() as u64);
         Context { fb, rtc, display: Display { dims, rotation },
                   library, settings, fonts, dictionaries: BTreeMap::new(),
