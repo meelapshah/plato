@@ -14,7 +14,7 @@ use walkdir::WalkDir;
 use rand_core::SeedableRng;
 use rand_xoshiro::Xoroshiro128Plus;
 use crate::dictionary::{Dictionary, load_dictionary_from_file};
-use crate::framebuffer::{Framebuffer, KoboFramebuffer, Display, UpdateMode};
+use crate::framebuffer::{Framebuffer, RemarkableFramebuffer, Display, UpdateMode};
 use crate::view::{View, Event, EntryId, EntryKind, ViewId, AppCmd};
 use crate::view::{render, render_region, render_no_wait, render_no_wait_region, handle_event, expose};
 use crate::view::common::{locate, locate_by_id, transfer_notifications, overlapping_rectangle};
@@ -342,7 +342,7 @@ enum ExitStatus {
 pub fn run() -> Result<(), Error> {
     let mut inactive_since = Instant::now();
     let mut exit_status = ExitStatus::Quit;
-    let mut fb = KoboFramebuffer::new(FB_DEVICE).context("Can't create framebuffer.")?;
+    let mut fb = RemarkableFramebuffer::new(FB_DEVICE).context("Can't create framebuffer.")?;
     let initial_rotation = CURRENT_DEVICE.transformed_rotation(fb.rotation());
     let startup_rotation = CURRENT_DEVICE.startup_rotation();
     if initial_rotation != startup_rotation {

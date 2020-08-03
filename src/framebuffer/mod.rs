@@ -1,6 +1,7 @@
 mod mxcfb_sys;
 mod kobo;
 mod image;
+mod remarkable;
 
 use anyhow::Error;
 use crate::geom::{Point, Rectangle, surface_area, nearest_segment_point, lerp};
@@ -8,6 +9,7 @@ use crate::geom::{CornerSpec, BorderSpec, ColorSource, Vec2};
 use crate::color::{BLACK, WHITE};
 
 pub use self::kobo::KoboFramebuffer;
+pub use self::remarkable::RemarkableFramebuffer;
 pub use self::image::Pixmap;
 
 #[derive(Debug, Copy, Clone)]
