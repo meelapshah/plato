@@ -2,6 +2,25 @@
 
 *Plato* is a document reader for *Kobo*'s e-readers.
 
+**This is a fork for the reMarkable (gen 1) device.**
+
+Also see [darvin](https://github.com/darvin)'s
+[work](https://github.com/darvin/plato) of 
+porting plato to the reMarkable 2 years ago.
+(I Read a nice mangas with his port. :))
+
+I wanted to do a new fork of it to maybe enjoy
+some new features. I also wanted to do a
+integration with mango. Building my own UI
+seems to be a bit to much, so I'll try to add it
+to plato once I'm finished porting it.
+
+**This repo is wip!** Remarkable-specific setup
+instructions, configuration help, releases and 
+any input are still missing.  
+If you manage to build it, you'll sit before an blank
+home screen.
+
 Documentation: [GUIDE](doc/GUIDE.md), [MANUAL](doc/MANUAL.md) and [BUILD](doc/BUILD.md).
 
 ## Supported firmwares
