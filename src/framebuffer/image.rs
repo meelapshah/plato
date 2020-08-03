@@ -3,6 +3,7 @@ use anyhow::{Error, Context, format_err};
 use super::{Framebuffer, UpdateMode};
 use crate::color::WHITE;
 use crate::geom::{Rectangle, lerp};
+use crate::view::RefreshQuality;
 
 #[derive(Debug, Clone)]
 pub struct Pixmap {
@@ -107,6 +108,13 @@ impl Framebuffer for Pixmap {
 
     fn monochrome(&self) -> bool {
         false
+    }
+
+    fn refresh_quality(&self) -> RefreshQuality {
+        RefreshQuality::Normal
+    }
+
+    fn set_refresh_quality(&mut self, quality: RefreshQuality) {
     }
 
     fn dims(&self) -> (u32, u32) {

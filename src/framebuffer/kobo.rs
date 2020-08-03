@@ -10,6 +10,7 @@ use crate::geom::Rectangle;
 use crate::device::{CURRENT_DEVICE, Model};
 use super::{UpdateMode, Framebuffer};
 use super::mxcfb_sys::*;
+use crate::view::RefreshQuality;
 
 impl Into<MxcfbRect> for Rectangle {
     fn into(self) -> MxcfbRect {
@@ -33,6 +34,7 @@ pub struct KoboFramebuffer {
     token: u32,
     flags: u32,
     monochrome: bool,
+    refresh_quality: RefreshQuality,
     set_pixel_rgb: SetPixelRgb,
     get_pixel_rgb: GetPixelRgb,
     as_rgb: AsRgb,
@@ -79,6 +81,7 @@ impl KoboFramebuffer {
                    token: 1,
                    flags: 0,
                    monochrome: false,
+                   refresh_quality: RefreshQuality::Normal,
                    set_pixel_rgb,
                    get_pixel_rgb,
                    as_rgb,
@@ -95,6 +98,14 @@ impl KoboFramebuffer {
 }
 
 impl Framebuffer for KoboFramebuffer {
+    fn refresh_quality(&self) -> RefreshQuality {
+        self.refresh_quality.clone()
+    }
+
+    fn set_refresh_quality(&mut self, quality: RefreshQuality) {
+        self.refresh_quality = quality;
+    }
+
     fn set_pixel(&mut self, x: u32, y: u32, color: u8) {
         (self.set_pixel_rgb)(self, x, y, [color, color, color]);
     }

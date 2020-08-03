@@ -11,6 +11,7 @@ use crate::color::{BLACK, WHITE};
 pub use self::kobo::KoboFramebuffer;
 pub use self::remarkable::RemarkableFramebuffer;
 pub use self::image::Pixmap;
+use crate::view::RefreshQuality;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Display {
@@ -38,8 +39,10 @@ pub trait Framebuffer {
     fn set_rotation(&mut self, n: i8) -> Result<(u32, u32), Error>;
     fn set_monochrome(&mut self, enable: bool);
     fn set_inverted(&mut self, enable: bool);
+    fn set_refresh_quality(&mut self, quality: RefreshQuality);
     fn monochrome(&self) -> bool;
     fn inverted(&self) -> bool;
+    fn refresh_quality(&self) -> RefreshQuality;
 
     fn toggle_inverted(&mut self) {
         self.set_inverted(!self.inverted());

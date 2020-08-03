@@ -441,6 +441,14 @@ pub enum EntryKind {
     Separator,
 }
 
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum RefreshQuality {
+    Fast,
+    Normal,
+    Better,
+    Perfect,
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum EntryId {
     LoadLibrary(usize),
@@ -491,6 +499,7 @@ pub enum EntryId {
     ToggleFuzzy,
     ToggleInverted,
     ToggleMonochrome,
+    RefreshQuality(RefreshQuality),
     ToggleWifi,
     Rotate(i8),
     Launch(AppCmd),

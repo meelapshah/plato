@@ -9,6 +9,7 @@ use super::{View, Event, Hub, ViewId, AppCmd, EntryId, EntryKind};
 use super::menu::{Menu, MenuKind};
 use super::notification::Notification;
 use crate::app::Context;
+use super::RefreshQuality;
 
 pub fn shift(view: &mut dyn View, delta: Point) {
     *view.rect_mut() += delta;
@@ -86,6 +87,30 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                            EntryId::Launch(AppCmd::Calculator)),
                         EntryKind::Command("Sketch".to_string(),
                                            EntryId::Launch(AppCmd::Sketch))];
+        /*
+        let refresh_qualities = vec![EntryKind::Command("Fast".to_string(),
+                                            EntryId::RefreshQuality(RefreshQuality::Fast)),
+                                     EntryKind::Command("Normal".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Normal)),
+                                     EntryKind::Command("Better".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Better)),
+                                     EntryKind::Command("Perfect".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Perfect)),
+                                    ];*/
+        
+        let refresh_qualities = vec![EntryKind::RadioButton("Fast".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Fast),
+                                           context.fb.refresh_quality() == RefreshQuality::Fast),
+                                     EntryKind::RadioButton("Normal".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Normal),
+                                           context.fb.refresh_quality() == RefreshQuality::Normal),
+                                     EntryKind::RadioButton("Better".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Better),
+                                           context.fb.refresh_quality() == RefreshQuality::Better),
+                                     EntryKind::RadioButton("Perfect".to_string(),
+                                           EntryId::RefreshQuality(RefreshQuality::Perfect),
+                                           context.fb.refresh_quality() == RefreshQuality::Perfect),
+                                    ];
 
         let mut entries = vec![EntryKind::CheckBox("Invert Colors".to_string(),
                                                    EntryId::ToggleInverted,
@@ -93,13 +118,15 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                EntryKind::CheckBox("Make Bitonal".to_string(),
                                                    EntryId::ToggleMonochrome,
                                                    context.fb.monochrome()),
+                               EntryKind::SubMenu("Refresh Quality".to_string(),
+                                                   refresh_qualities),
                                EntryKind::CheckBox("Enable WiFi".to_string(),
                                                    EntryId::ToggleWifi,
                                                    context.settings.wifi),
                                EntryKind::Separator,
                                EntryKind::SubMenu("Rotate".to_string(), rotate),
                                EntryKind::Command("Take Screenshot".to_string(),
-                                                  EntryId::TakeScreenshot),
+                                                   EntryId::TakeScreenshot),
                                EntryKind::Separator,
                                EntryKind::SubMenu("Applications".to_string(), apps),
                                EntryKind::Separator];

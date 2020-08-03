@@ -16,7 +16,7 @@ use libremarkable::framebuffer::cgmath;
 use libremarkable::framebuffer::common;
 use std::convert::TryInto;
 use anyhow::anyhow;
-
+use crate::view::RefreshQuality;
 
 type SetPixelRgb = fn(&mut RemarkableFramebuffer, u32, u32, [u8; 3]);
 type GetPixelRgb = fn(&RemarkableFramebuffer, u32, u32) -> [u8; 3];
@@ -26,13 +26,14 @@ pub struct RemarkableFramebuffer {
     fb: libremarkable::framebuffer::core::Framebuffer<'static>,
     monochrome: bool, // Currently stubbed
     inverted: bool, // Currently stubbed
+    refresh_quality: RefreshQuality,
 }
 
 impl RemarkableFramebuffer {
     pub fn new(fb_device_path: &'static str) -> Result<RemarkableFramebuffer, Error> {
         let fb = libremarkable::framebuffer::core::Framebuffer::new(fb_device_path);
 
-        Ok(RemarkableFramebuffer { fb, monochrome: false, inverted: false })
+        Ok(RemarkableFramebuffer { fb, monochrome: false, inverted: false, refresh_quality: RefreshQuality::Normal })
     }
 
     fn set_pixel_rgb(&mut self, x: u32, y: u32, rgb: [u8; 3]) {
@@ -46,6 +47,14 @@ impl RemarkableFramebuffer {
 }
 
 impl Framebuffer for RemarkableFramebuffer {
+    fn refresh_quality(&self) -> RefreshQuality {
+        self.refresh_quality.clone()
+    }
+
+    fn set_refresh_quality(&mut self, quality: RefreshQuality) {
+        self.refresh_quality = quality;
+    }
+
     fn set_pixel(&mut self, x: u32, y: u32, color: u8) {
         // color seems to be inverted! Either in color::GRAY or from plato.
         self.fb.write_pixel(cgmath::Point2 { x: x as i32, y: y as i32 }, common::color::GRAY(255 - color));
@@ -143,15 +152,57 @@ impl Framebuffer for RemarkableFramebuffer {
             },
             UpdateMode::Partial => {
                 println!("Update partial");
-                Ok(self.fb.partial_refresh(
-                    &new_rect,
-                    PartialRefreshMode::Wait,
-                    common::waveform_mode::WAVEFORM_MODE_AUTO,
-                    common::display_temp::TEMP_USE_AMBIENT, // Higher latency (see comments on this)
-                    common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER, // EPDC_FLAG_USE_REMARKABLE_DITHER leads to problems here!
-                    0,
-                    false,
-                ))
+                // EPDC_FLAG_USE_REMARKABLE_DITHER most likely leads to problems here!
+                match self.refresh_quality {
+                    RefreshQuality::Fast => {
+                        // Try to be quick
+                        Ok(self.fb.partial_refresh(
+                            &new_rect,
+                            PartialRefreshMode::Async,
+                            common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Ui setting
+                            common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Lowest latency
+                            common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH, 
+                            0,
+                            false,
+                        ))
+                    }
+                    RefreshQuality::Normal => {
+                        // Not the fastest but decent for epubs
+                        Ok(self.fb.partial_refresh(
+                            &new_rect,
+                            PartialRefreshMode::Async,
+                            common::waveform_mode::WAVEFORM_MODE_AUTO,
+                            common::display_temp::TEMP_USE_AMBIENT,
+                            common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                            0,
+                            false,
+                        ))
+                    },
+                    RefreshQuality::Better => {
+                        // "Fast" full refreshes. Eliminates more ghosting in mangas with dark scenes
+                        Ok(self.fb.partial_refresh(
+                            &new_rect,
+                            PartialRefreshMode::Async,
+                            common::waveform_mode::WAVEFORM_MODE_GC16,
+                            common::display_temp::TEMP_USE_AMBIENT,
+                            common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
+                            0,
+                            true, // <-- Force full refresh
+                        ))
+                    },
+                    RefreshQuality::Perfect => {
+                        // Even more agressive full refreshes. Should eliminate all ghosting
+                        Ok(self.fb.partial_refresh(
+                            &new_rect,
+                            PartialRefreshMode::Async,
+                            common::waveform_mode::WAVEFORM_MODE_GC16,
+                            common::display_temp::TEMP_USE_MAX,
+                            common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
+                            0,
+                            true, // <-- Force full refresh
+                        ))
+                    }
+                }
             },
             UpdateMode::Full => {
                 println!("Update full");
