@@ -1,11 +1,13 @@
 mod standard;
 mod natural;
 mod premixed;
+mod fake;
 
 use serde::{Serialize, Deserialize};
 pub use self::standard::StandardFrontlight;
 pub use self::natural::NaturalFrontlight;
 pub use self::premixed::PremixedFrontlight;
+pub use self::fake::FakeFrontlight;
 use crate::geom::lerp;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]

@@ -30,7 +30,7 @@ use crate::input::{raw_events, device_events, usb_events, display_rotate_event, 
 use crate::gesture::{GestureEvent, gesture_events};
 use crate::helpers::{load_json, load_toml, save_toml, IsHidden};
 use crate::settings::{ButtonScheme, Settings, SETTINGS_PATH, RotationLock};
-use crate::frontlight::{Frontlight, StandardFrontlight, NaturalFrontlight, PremixedFrontlight};
+use crate::frontlight::{Frontlight, StandardFrontlight, NaturalFrontlight, PremixedFrontlight, FakeFrontlight};
 use crate::lightsensor::{LightSensor, KoboLightSensor};
 use crate::battery::{Battery, FakeBattery};
 use crate::geom::{Rectangle, Edge};
@@ -258,6 +258,8 @@ fn build_context(fb: Box<dyn Framebuffer>) -> Result<Context, Error> {
                                         .context("Can't create natural frontlight.")?) as Box<dyn Frontlight>,
         FrontlightKind::Premixed => Box::new(PremixedFrontlight::new(levels.intensity, levels.warmth)
                                         .context("Can't create premixed frontlight.")?) as Box<dyn Frontlight>,
+        FrontlightKind::Fake => Box::new(FakeFrontlight::new(levels.intensity)
+                                        .context("Can't create fake frontlight.")?) as Box<dyn Frontlight>,
     };
 
     Ok(Context::new(fb, rtc, library, settings,
