@@ -38,5 +38,5 @@ cp contrib/*.sh dist
 
 patchelf --remove-rpath dist/libs/*
 
-[ ! -z STRIP ] || STRIP='/usr/local/oecore-x86_64/sysroots/x86_64-oesdk-linux/usr/bin/arm-oe-linux-gnueabi/arm-oe-linux-gnueabi-strip'
+[ ! -z $STRIP ] || STRIP='/usr/local/oecore-x86_64/sysroots/x86_64-oesdk-linux/usr/bin/arm-oe-linux-gnueabi/arm-oe-linux-gnueabi-strip'
 $STRIP dist/plato dist/libs/*
