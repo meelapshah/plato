@@ -112,21 +112,21 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                            context.fb.refresh_quality() == RefreshQuality::Perfect),
                                     ];
 
-        let mut entries = vec![EntryKind::CheckBox("Invert Colors".to_string(),
+        let mut entries = vec![/*EntryKind::CheckBox("Invert Colors".to_string(),
                                                    EntryId::ToggleInverted,
                                                    context.fb.inverted()),
                                EntryKind::CheckBox("Make Bitonal".to_string(),
                                                    EntryId::ToggleMonochrome,
-                                                   context.fb.monochrome()),
+                                                   context.fb.monochrome()),*/
                                EntryKind::SubMenu("Refresh Quality".to_string(),
                                                    refresh_qualities),
-                               EntryKind::CheckBox("Enable WiFi".to_string(),
+                               /*EntryKind::CheckBox("Enable WiFi".to_string(),
                                                    EntryId::ToggleWifi,
-                                                   context.settings.wifi),
+                                                   context.settings.wifi),*/
                                EntryKind::Separator,
                                EntryKind::SubMenu("Rotate".to_string(), rotate),
-                               EntryKind::Command("Take Screenshot".to_string(),
-                                                   EntryId::TakeScreenshot),
+                               /*EntryKind::Command("Take Screenshot".to_string(),
+                                                   EntryId::TakeScreenshot),*/
                                EntryKind::Separator,
                                EntryKind::SubMenu("Applications".to_string(), apps),
                                EntryKind::Separator];
