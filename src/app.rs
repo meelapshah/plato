@@ -1054,6 +1054,10 @@ pub fn run() -> Result<(), Error> {
                 exit_status = ExitStatus::Reboot;
                 break;
             },
+            Event::Select(EntryId::PowerOff) => {
+                exit_status = ExitStatus::PowerOff;
+                break;
+            },
             Event::Select(EntryId::Quit) => {
                 break;
             },
@@ -1109,11 +1113,11 @@ pub fn run() -> Result<(), Error> {
     match exit_status {
         ExitStatus::Reboot => {
             Command::new("sync").status().ok();
-            Command::new("reboot").status().ok();
+            Command::new("/sbin/reboot").status().ok();
         },
         ExitStatus::PowerOff => {
             Command::new("sync").status().ok();
-            Command::new("poweroff").arg("-f").status().ok();
+            Command::new("/sbin/poweroff").status().unwrap();
         },
         ExitStatus::QuitToXochitl => {
             Command::new("sync").status().ok();
