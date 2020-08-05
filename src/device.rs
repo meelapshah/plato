@@ -296,7 +296,7 @@ impl Device {
             Model::AuraH2OEd2V2 => (0, -1),
             Model::Forma | Model::Forma32GB => (2, -1),
             Model::LibraH2O => (3, 1),
-            Model::Remarkable => (2, 2),
+            Model::Remarkable => (1, 1),
             _ => (2, 1),
         }
     }
@@ -307,7 +307,8 @@ impl Device {
 
     pub fn swapping_scheme(&self) -> i8 {
         match self.model {
-            Model::LibraH2O => 0,
+            Model::LibraH2O |
+            Model::Remarkable => 0,
             _ => 1,
         }
     }
@@ -317,6 +318,7 @@ impl Device {
             Model::LibraH2O => 0,
             Model::AuraH2OEd2V1 => 1,
             Model::Forma | Model::Forma32GB => 1,
+            Model::Remarkable => 1,
             _ => 3,
         }
     }

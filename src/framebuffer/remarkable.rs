@@ -257,13 +257,14 @@ impl Framebuffer for RemarkableFramebuffer {
 
     #[inline]
     fn rotation(&self) -> i8 {
-        0
+        self.fb.var_screen_info.rotate as i8
     }
 
     fn set_rotation(&mut self, n: i8) -> Result<(u32, u32), Error> {
         // This will probably not work.
         // Not sure if the result is even correct.
         self.fb.var_screen_info.rotate = n as u32;
+        self.fb.update_var_screeninfo();
 
         // Assume that rotations 0 and 2 are portrait
         // and 1 and 3 are landscape (switched axes)
