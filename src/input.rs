@@ -7,7 +7,6 @@ use std::fs::File;
 use std::sync::mpsc::{self, Sender, Receiver};
 use std::os::unix::io::AsRawFd;
 use std::ffi::CString;
-use fxhash::{FxHashMap, FxHashSet};
 use crate::framebuffer::Display;
 use crate::settings::ButtonScheme;
 use crate::device::{CURRENT_DEVICE, Model};
@@ -15,6 +14,7 @@ use crate::geom::{Point, LinearDir};
 use anyhow::{Error, Context};
 use libremarkable::input::ecodes;
 use libremarkable::framebuffer::common;
+use std::collections::HashMap;
 
 // Event types
 pub const EV_SYN: u16 = 0x00;
@@ -24,6 +24,7 @@ pub const EV_MSC: u16 = 0x04;
 
 // Event codes
 pub const ABS_MT_TRACKING_ID: u16 = 0x39;
+pub const ABS_MT_SLOT: u16 = ecodes::ABS_MT_SLOT;
 pub const ABS_MT_POSITION_X: u16 = 0x35;
 pub const ABS_MT_POSITION_Y: u16 = 0x36;
 pub const ABS_MT_PRESSURE: u16 = 0x3a;
@@ -324,16 +325,34 @@ pub fn device_events(rx: Receiver<InputEvent>, display: Display, button_scheme: 
 }
 
 pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, display: Display, button_scheme: ButtonScheme) {
-    let mut id = 0;
-    let mut position = Point::default();
-    let mut pressure = 0;
+    let mut current_slot: i32 = 0; // Basically for which finger id to events are meant
     let mut last_activity = -60;
     let Display { mut dims, mut rotation } = display;
-    let mut fingers: FxHashMap<i32, Point> = FxHashMap::default();
-    let mut packet_ids: FxHashSet<i32> = FxHashSet::default();
-    let proto = CURRENT_DEVICE.proto;
 
-    let mut tc = match proto {
+
+    // Only some private helper struct for state-management
+    struct EvFinger {
+        pos: Point,
+        pos_updated: bool, // Report motion at SYN_REPORT?
+
+        
+        last_pressed: bool,
+        pressed: bool,
+    };
+    impl Default for EvFinger {
+        fn default() -> EvFinger {
+            EvFinger {
+                pos: Point { x: -1, y: -1 },
+                pos_updated: false,
+                last_pressed: false,
+                pressed: false,
+            }
+        }
+    }
+
+    let mut ev_fingers: HashMap<i32, EvFinger> = HashMap::new();
+ 
+    let mut tc = match CURRENT_DEVICE.proto {
         TouchProto::Single => SINGLE_TOUCH_CODES,
         TouchProto::MultiA => MULTI_TOUCH_CODES_A,
         TouchProto::MultiB => MULTI_TOUCH_CODES_B,
@@ -352,42 +371,39 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
 
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
-            if evt.code == ABS_MT_TRACKING_ID {
-                let last_id = id;
-                id = evt.value;
-                if proto == TouchProto::MultiB {
-                    packet_ids.insert(id);
-                }
-
-                // This is reMarkables way of saying a finger was
-                // releases. Weird..
-                if last_id != -1 && id == -1 {
-                    ty.send(DeviceEvent::Finger {
-                        id: last_id,
-                        time: seconds(evt.time),
-                        status: FingerStatus::Up,
-                        position,
-                    }).unwrap();
-                    fingers.remove(&last_id);
-                }
-
-                
+            if evt.code == ABS_MT_SLOT {
+                current_slot = evt.value;
             } else if evt.code == tc.x {
                 let scaled_value = (evt.value as f32 * scale_x) as i32;
-                position.x = if mirror_x {
+                ev_fingers.entry(current_slot).or_default().pos.x = if mirror_x {
                     dims.0 as i32 - 1 - scaled_value
                 } else {
                     scaled_value
                 };
+                ev_fingers.entry(current_slot).or_default().pos_updated = true;
             } else if evt.code == tc.y {
-                let scaled_value = (evt.value as f32 * scale_y) as i32;
-                position.y = if mirror_y {
+                let scaled_value = (evt.value as f32 * scale_x) as i32;
+                ev_fingers.entry(current_slot).or_default().pos.y = if mirror_y {
                     dims.1 as i32 - 1 - scaled_value
                 } else {
                     scaled_value
                 };
-            } else if evt.code == tc.pressure {
-                pressure = evt.value;
+                ev_fingers.entry(current_slot).or_default().pos_updated = true;
+            } else if evt.code == ABS_MT_PRESSURE {
+                // Pressure is sent after position and tracking id
+                // So its better to get a click with an actual pos for
+
+                // Also: Pressure isn't given when there is none
+                // Also no distance. So no detection of finger up
+                // using pressure.
+
+                if evt.value > 0 { // Pretty much always true, but who knows
+                    ev_fingers.entry(current_slot).or_default().pressed = true;
+                }
+            } else if evt.code == ABS_MT_TRACKING_ID {
+                    if evt.value == -1 { // Finger was raised / Guesture/Track ended
+                        ev_fingers.entry(current_slot).or_default().pressed = false;
+                    }
             }
         } else if evt.kind == EV_SYN {
             // The absolute value accounts for the wrapping around that might occur,
@@ -396,52 +412,45 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                 last_activity = evt.time.tv_sec;
                 ty.send(DeviceEvent::UserActivity).ok();
             }
-            // Note: The reMarkable doesnt seem to use SYN_MT_REPORT
-            // even though is is MultiA and MultiB
+
             if evt.code == SYN_REPORT {
-                if let Some(&p) = fingers.get(&id) {
-                    if pressure > 0 {
-                        if p != position {
-                            ty.send(DeviceEvent::Finger {
-                                id,
-                                time: seconds(evt.time),
-                                status: FingerStatus::Motion,
-                                position,
-                            }).unwrap();
-                            fingers.insert(id, position);
-                        }
-                    } else {
+                // Send new positions
+                for (slot, mut finger) in ev_fingers.iter_mut() {
+                    if ! finger.last_pressed && finger.pressed {
+                        // Pressed
+                        finger.last_pressed = finger.pressed;
                         ty.send(DeviceEvent::Finger {
-                            id,
-                            time: seconds(evt.time),
-                            status: FingerStatus::Up,
-                            position,
-                        }).unwrap();
-                        fingers.remove(&id);
-                    }
-                } else {
-                    if id != -1 {
-                        ty.send(DeviceEvent::Finger {
-                            id,
+                            id: *slot,
                             time: seconds(evt.time),
                             status: FingerStatus::Down,
-                            position,
+                            position: finger.pos.clone()
                         }).unwrap();
-                        fingers.insert(id, position);
+                    } else if finger.last_pressed && ! finger.pressed {
+                        // Released
+                        finger.last_pressed = finger.pressed;
+                        ty.send(DeviceEvent::Finger {
+                            id: *slot,
+                            time: seconds(evt.time),
+                            status: FingerStatus::Up,
+                            position: finger.pos.clone()
+                        }).unwrap();
+                    }else if finger.last_pressed && finger.pressed && finger.pos_updated {
+                        ty.send(DeviceEvent::Finger {
+                            id: *slot,
+                            time: seconds(evt.time),
+                            status: FingerStatus::Motion,
+                            position: finger.pos.clone()
+                        }).unwrap();
+                    }
+
+                    if finger.pos_updated {
+                        finger.pos_updated = false;
                     }
                 }
-            } else if proto == TouchProto::MultiB && evt.code == SYN_REPORT {
-                fingers.retain(|other_id, other_position| {
-                    packet_ids.contains(other_id) ||
-                    ty.send(DeviceEvent::Finger {
-                        id: *other_id,
-                        time: seconds(evt.time),
-                        status: FingerStatus::Up,
-                        position: *other_position,
-                    }).is_err()
-                });
-                packet_ids.clear();
+            }else {
+                println!("Unknown syn: {}", evt.code);
             }
+
         } else if evt.kind == EV_KEY {
             if evt.code == SLEEP_COVER {
                 if evt.value == VAL_PRESS {
