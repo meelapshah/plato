@@ -141,7 +141,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     &new_rect,
                     PartialRefreshMode::Async,
                     common::waveform_mode::WAVEFORM_MODE_GLR16,
-                    common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
+                    common::display_temp::TEMP_USE_AMBIENT,
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     common::DRAWING_QUANT_BIT,
                     false,
@@ -153,7 +153,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     &new_rect,
                     PartialRefreshMode::Async,
                     common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Also used by reMarkable for UI (anymore??)
-                    common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
+                    common::display_temp::TEMP_USE_AMBIENT,
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     common::DRAWING_QUANT_BIT,
                     false,
@@ -169,7 +169,7 @@ impl Framebuffer for RemarkableFramebuffer {
                             &new_rect,
                             PartialRefreshMode::Async,
                             common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Ui setting
-                            common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Lowest latency
+                            common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency
                             common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH, 
                             common::DRAWING_QUANT_BIT,
                             false,
