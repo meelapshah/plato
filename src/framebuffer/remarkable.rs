@@ -128,7 +128,7 @@ impl Framebuffer for RemarkableFramebuffer {
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
-                    common::waveform_mode::WAVEFORM_MODE_GLR16,
+                    common::waveform_mode::WAVEFORM_MODE_DU,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
                     common::DRAWING_QUANT_BIT,
