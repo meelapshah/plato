@@ -1,6 +1,3 @@
-use std::ptr;
-use std::path::Path;
-use std::slice;
 use std::ops::Drop;
 use anyhow::{Error, Context};
 use crate::geom::Rectangle;
@@ -21,11 +18,6 @@ use mmap;
 use mmap::MemoryMap;
 use std::os::unix::io::AsRawFd;
 
-
-type SetPixelRgb = fn(&mut RemarkableFramebuffer, u32, u32, [u8; 3]);
-type GetPixelRgb = fn(&RemarkableFramebuffer, u32, u32) -> [u8; 3];
-type AsRgb = fn(&RemarkableFramebuffer) -> Vec<u8>;
-
 pub struct RemarkableFramebuffer {
     fb: libremarkable::framebuffer::core::Framebuffer<'static>,
     monochrome: bool, // Currently stubbed
@@ -35,21 +27,12 @@ pub struct RemarkableFramebuffer {
 
 impl RemarkableFramebuffer {
     pub fn new(fb_device_path: &'static str) -> Result<RemarkableFramebuffer, Error> {
-        let mut fb = libremarkable::framebuffer::core::Framebuffer::new(fb_device_path, 1);
-        println!("X: {}, Y: {} | XV: {}, YV: {}",
-        fb.var_screen_info.xres, fb.var_screen_info.yres,
-        fb.var_screen_info.xres_virtual, fb.var_screen_info.yres_virtual);
-        //fb.update_var_screeninfo();
-        // X: 1404, Y: 1872 | XV: 1408, YV: 3840 <--- WTF?!?!?
-        // If not mistaken, i managed landscape mode
-        // at the very beginning of the affecting commit
-        // maybe just pretent to be rotated?
-        // rotation() = xxx (- 1) ??
-
-        // Also fact: Using two fingers = UI reaction messed up!
-        // Maybe check the finger recognition for trailing ones.
-
-        Ok(RemarkableFramebuffer { fb, monochrome: false, inverted: false, refresh_quality: RefreshQuality::Normal })
+        Ok(RemarkableFramebuffer {
+            fb: libremarkable::framebuffer::core::Framebuffer::new(fb_device_path),
+            monochrome: false,
+            inverted: false,
+            refresh_quality: RefreshQuality::Normal
+        })
     }
 
     fn set_pixel_rgb(&mut self, x: u32, y: u32, rgb: [u8; 3]) {
@@ -134,19 +117,7 @@ impl Framebuffer for RemarkableFramebuffer {
             width: rect.max.x as u32 - rect.min.x as u32,
             height: rect.max.y as u32 - rect.min.y as u32,
         };
-        println!("{:?} -> {:?}", mode, new_rect);
         
-
-        if false {
-            return Ok(self.fb.full_refresh(
-                    common::waveform_mode::WAVEFORM_MODE_GC16, // Flashes black white in full mode
-                    common::display_temp::TEMP_USE_AMBIENT, // Not such low latency (see comments on this)
-                    common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER, // Good or bad here???
-                    common::DRAWING_QUANT_BIT,
-                    false, // Don't wait for completion (token should allow the device to do anyway if actually wanted)
-                ));
-        }
-
         // Note: I took some of the comments from libremarkable
         // regarding those settings and rephrased them here for
         // easier lookup. Please also look up the original comments
@@ -154,7 +125,7 @@ impl Framebuffer for RemarkableFramebuffer {
         match mode {
             UpdateMode::FastMono => {
                 println!("Update fastmono");
-                 Ok(self.fb.partial_refresh(
+                Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
                     common::waveform_mode::WAVEFORM_MODE_GLR16,
@@ -301,17 +272,14 @@ impl Framebuffer for RemarkableFramebuffer {
     fn set_rotation(&mut self, n: i8) -> Result<(u32, u32), Error> {
         // This will probably not work.
         // Not sure if the result is even correct.
-        println!("New FB-Rot: {}", n);
 
-        self.fb = libremarkable::framebuffer::core::Framebuffer::new("/dev/fb0", n as u32);
-        
-        //self.fb.var_screen_info.rotate = n as u32;
-        //self.fb.update_var_screeninfo();
-        println!("X: {}, Y: {} | XV: {}, YV: {}",
-        self.fb.var_screen_info.xres, self.fb.var_screen_info.yres,
-        self.fb.var_screen_info.xres_virtual, self.fb.var_screen_info.yres_virtual);
+        self.fb.var_screen_info.rotate = n as u32;
+        self.fb.update_var_screeninfo();
 
-        /*let frame_length = (self.fb.fix_screen_info.line_length * self.fb.var_screen_info.yres) as usize;
+        // If this is not done, the frame will be garbled
+        // Kindly taken from libremarkable::framebuffer::core::Framebuffer::new()
+        self.fb.fix_screen_info = libremarkable::framebuffer::core::Framebuffer::get_fix_screeninfo(&self.fb.device); // Seems to change
+        let frame_length = (self.fb.fix_screen_info.line_length * self.fb.var_screen_info.yres) as usize;
         let mem_map = MemoryMap::new(
             frame_length,
             &[
@@ -323,16 +291,10 @@ impl Framebuffer for RemarkableFramebuffer {
             ],
         )
         .unwrap();
-        self.fb.frame = mem_map;*/
+        self.fb.frame = mem_map;
 
-        // Assume that rotations 0 and 2 are portrait
-        // and 1 and 3 are landscape (switched axes)
-        // Is the return type even supposed to be a size??
-        //if n % 2 == 0 {
-            Ok((self.width(), self.height()))
-        //}else {
-            //Ok((self.height(), self.width()))
-        //}
+
+        Ok((self.width(), self.height())) // With and height have already updated
     }
 
     fn set_inverted(&mut self, enable: bool) {
