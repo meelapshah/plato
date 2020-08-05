@@ -122,7 +122,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     common::waveform_mode::WAVEFORM_MODE_GLR16,
                     common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                    0,
+                    common::DRAWING_QUANT_BIT,
                     false,
                 ))
             },
@@ -134,7 +134,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     common::waveform_mode::WAVEFORM_MODE_GLR16,
                     common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                    0,
+                    common::DRAWING_QUANT_BIT,
                     false,
                 ))
             },
@@ -146,7 +146,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Also used by reMarkable for UI (anymore??)
                     common::display_temp::TEMP_USE_AMBIENT, // Low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                    0,
+                    common::DRAWING_QUANT_BIT,
                     false,
                 ))
             },
@@ -162,7 +162,7 @@ impl Framebuffer for RemarkableFramebuffer {
                             common::waveform_mode::WAVEFORM_MODE_GC16_FAST, // Ui setting
                             common::display_temp::TEMP_USE_REMARKABLE_DRAW, // Lowest latency
                             common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH, 
-                            0,
+                            common::DRAWING_QUANT_BIT,
                             false,
                         ))
                     }
@@ -174,7 +174,7 @@ impl Framebuffer for RemarkableFramebuffer {
                             common::waveform_mode::WAVEFORM_MODE_AUTO,
                             common::display_temp::TEMP_USE_AMBIENT,
                             common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
-                            0,
+                            common::DRAWING_QUANT_BIT,
                             false,
                         ))
                     },
@@ -186,7 +186,7 @@ impl Framebuffer for RemarkableFramebuffer {
                             common::waveform_mode::WAVEFORM_MODE_GC16,
                             common::display_temp::TEMP_USE_AMBIENT,
                             common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
-                            0,
+                            common::DRAWING_QUANT_BIT,
                             true, // <-- Force full refresh
                         ))
                     },
@@ -198,7 +198,7 @@ impl Framebuffer for RemarkableFramebuffer {
                             common::waveform_mode::WAVEFORM_MODE_GC16,
                             common::display_temp::TEMP_USE_MAX,
                             common::dither_mode::EPDC_FLAG_USE_DITHERING_PASSTHROUGH,
-                            0,
+                            common::DRAWING_QUANT_BIT,
                             true, // <-- Force full refresh
                         ))
                     }
@@ -210,7 +210,7 @@ impl Framebuffer for RemarkableFramebuffer {
                     common::waveform_mode::WAVEFORM_MODE_GC16, // Flashes black white in full mode
                     common::display_temp::TEMP_USE_AMBIENT, // Not such low latency (see comments on this)
                     common::dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER, // Good or bad here???
-                    0,
+                    common::DRAWING_QUANT_BIT,
                     false, // Don't wait for completion (token should allow the device to do anyway if actually wanted)
                 ))
             }
