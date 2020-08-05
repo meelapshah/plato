@@ -846,7 +846,7 @@ pub fn run() -> Result<(), Error> {
             },
             Event::Open(info) => {
                 let rotation = context.display.rotation;
-                if let Some(n) = info.reader.as_ref()
+                /*if let Some(n) = info.reader.as_ref()
                                      .and_then(|r| r.rotation.map(|n| CURRENT_DEVICE.from_canonical(n))) {
                     if CURRENT_DEVICE.orientation(n) != CURRENT_DEVICE.orientation(rotation) {
                         updating.retain(|tok, _| context.fb.wait(*tok).is_err());
@@ -856,7 +856,7 @@ pub fn run() -> Result<(), Error> {
                             context.display.dims = dims;
                         }
                     }
-                }
+                }*/
                 let info2 = info.clone();
                 if let Some(r) = Reader::new(context.fb.rect(), *info, &tx, &mut context) {
                     let mut next_view = Box::new(r) as Box<dyn View>;
