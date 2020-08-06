@@ -15,7 +15,7 @@ use crate::unit::mm_to_px;
 pub use self::preset::{LightPreset, guess_frontlight};
 
 pub const SETTINGS_PATH: &str = "Settings.toml";
-pub const DEFAULT_FONT_PATH: &str = "/mnt/onboard/fonts";
+pub const DEFAULT_FONT_PATH: &str = "fonts";
 pub const INTERNAL_CARD_ROOT: &str = "/mnt/onboard";
 pub const EXTERNAL_CARD_ROOT: &str = "/mnt/sd";
 // Default font size in points.
