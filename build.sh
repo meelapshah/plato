@@ -9,6 +9,7 @@ method=${1:-"fast"}
 case "$method" in
 	fast)
 		./download.sh 'libs/*'
+		./download_headers.sh
 		cd libs
 
 		ln -s libz.so.1 libz.so
