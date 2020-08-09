@@ -56,7 +56,7 @@ impl Library {
             fs::create_dir(&path).ok();
         }
 
-        for entry in fs::read_dir(&path).unwrap() {
+        for entry in fs::read_dir(&path).expect(&format!("Failed to read directory \"{:?}\"", &path)) {
             let entry = entry.unwrap();
             let path = entry.path();
             if let Some(fp) = path.file_stem().and_then(|v| v.to_str())

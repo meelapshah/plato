@@ -416,13 +416,8 @@ impl Default for Settings {
             selected_library: if CURRENT_DEVICE.has_removable_storage() { 1 } else { 0 },
             libraries: vec![
                 LibrarySettings {
-                    name: "On Board".to_string(),
-                    path: PathBuf::from(INTERNAL_CARD_ROOT),
-                    .. Default::default()
-                },
-                LibrarySettings {
-                    name: "Removable".to_string(),
-                    path: PathBuf::from(EXTERNAL_CARD_ROOT),
+                    name: "Media".to_string(),
+                    path: PathBuf::from("media"),
                     .. Default::default()
                 },
             ],

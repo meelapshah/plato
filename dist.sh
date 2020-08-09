@@ -8,6 +8,7 @@
 
 mkdir -p dist/libs
 mkdir dist/dictionaries
+mkdir dist/media # Used for default library
 
 cp libs/libz.so dist/libs/libz.so.1
 cp libs/libbz2.so dist/libs/libbz2.so.1.0
