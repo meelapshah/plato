@@ -32,8 +32,8 @@ impl TopBar {
                                   root_event);
         children.push(Box::new(root_icon) as Box<dyn View>);
 
-        let mut clock_rect = rect![rect.max - pt!(4*side, side),
-                                   rect.max - pt!(3*side, 0)];
+        let mut clock_rect = rect![rect.max - pt!(3*side, side),
+                                   rect.max - pt!(2*side, 0)];
         let clock_label = Clock::new(&mut clock_rect, fonts);
         let title_rect = rect![rect.min.x + side, rect.min.y,
                                clock_rect.min.x, rect.max.y];
@@ -44,18 +44,18 @@ impl TopBar {
 
         let capacity = context.battery.capacity().unwrap_or(0.0);
         let status = context.battery.status().unwrap_or(crate::battery::Status::Discharging);
-        let battery_widget = Battery::new(rect![rect.max - pt!(3*side, side),
-                                                rect.max - pt!(2*side, 0)],
+        let battery_widget = Battery::new(rect![rect.max - pt!(2*side, side),
+                                                rect.max - pt!(1*side, 0)],
                                           capacity,
                                           status);
         children.push(Box::new(battery_widget) as Box<dyn View>);
 
         let name = if context.settings.frontlight { "frontlight" } else { "frontlight-disabled" };
-        let frontlight_icon = Icon::new(name,
+        /*let frontlight_icon = Icon::new(name,
                                         rect![rect.max - pt!(2*side, side),
                                               rect.max - pt!(side, 0)],
                                         Event::Show(ViewId::Frontlight));
-        children.push(Box::new(frontlight_icon) as Box<dyn View>);
+        children.push(Box::new(frontlight_icon) as Box<dyn View>);*/
 
         let menu_rect = rect![rect.max-side, rect.max];
         let menu_icon = Icon::new("menu",
