@@ -50,8 +50,8 @@ impl TopBar {
                                           status);
         children.push(Box::new(battery_widget) as Box<dyn View>);
 
-        let name = if context.settings.frontlight { "frontlight" } else { "frontlight-disabled" };
-        /*let frontlight_icon = Icon::new(name,
+        /*let name = if context.settings.frontlight { "frontlight" } else { "frontlight-disabled" };
+        let frontlight_icon = Icon::new(name,
                                         rect![rect.max - pt!(2*side, side),
                                               rect.max - pt!(side, 0)],
                                         Event::Show(ViewId::Frontlight));
@@ -83,10 +83,12 @@ impl TopBar {
     }
 
     pub fn update_frontlight_icon(&mut self, hub: &Hub, context: &mut Context) {
+        /*
         let name = if context.settings.frontlight { "frontlight" } else { "frontlight-disabled" };
         let icon = self.child_mut(4).downcast_mut::<Icon>().unwrap();
         icon.name = name.to_string();
         hub.send(Event::Render(*icon.rect(), UpdateMode::Gui)).ok();
+        */
     }
 }
 
