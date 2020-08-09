@@ -399,11 +399,8 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
 
     let (mut mirror_x, mut mirror_y) = CURRENT_DEVICE.should_mirror_axes(rotation);
     // Scale touchscreen of remarkable properly
-    let scale_touch_x = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
-    let scale_touch_y = common::DISPLAYHEIGHT as f32 / common::MTHEIGHT as f32;
-
-    let scale_wacom_x = common::DISPLAYWIDTH as f32 / common::WACOMWIDTH as f32;
-    let scale_wacom_y = common::DISPLAYHEIGHT as f32 / common::WACOMHEIGHT as f32;
+    let scale_touch = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
+    let scale_wacom = common::DISPLAYWIDTH as f32 / common::WACOMWIDTH as f32;
 
     if CURRENT_DEVICE.should_swap_axes(rotation) {
         mem::swap(&mut tc.x, &mut tc.y);
@@ -412,18 +409,37 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
     let mut button_scheme = button_scheme;
 
     while let Ok(evt) = rx.recv() {
+        // This codes does manually what should_mirror_axes calculates
+        // for the touch input since the origin of the digitizer is yet
+        // another one.
+        let should_wacom_swap = rotation % 2 == 0; // Swap axes in landscape
+        let mirror_wacom_x = match rotation {
+            1 /*   0° */ => false,
+            2 /*  90° */ => true,
+            3 /* 180° */ => true,
+            0 /* 270° */ => false,
+            _ => unreachable!()
+        };
+        let mirror_wacom_y = match rotation {
+            1 /*   0° */ => true,
+            2 /*  90° */ => true,
+            3 /* 180° */ => false,
+            0 /* 270° */ => false,
+            _ => unreachable!()
+        };
+
         if evt.kind == EV_ABS {
-            if evt.code == ecodes::ABS_X { // (wacom)
-                let scaled_value = (evt.value as f32 * scale_wacom_x) as i32;
-                ev_fingers.entry(PEN_SLOT).or_default().pos.y = if mirror_y {
+            if evt.code == (if should_wacom_swap { ecodes::ABS_Y } else {ecodes::ABS_X }) { // (wacom)
+                let scaled_value = (evt.value as f32 * scale_wacom) as i32;
+                ev_fingers.entry(PEN_SLOT).or_default().pos.y = if mirror_wacom_y {
                     dims.1 as i32 - 1 - scaled_value
                 } else {
                     scaled_value
                 };
                 ev_fingers.entry(PEN_SLOT).or_default().pos_updated = true;
-            }else if evt.code == ecodes::ABS_Y { // (wacom)
-                let scaled_value = (evt.value as f32 * scale_wacom_y) as i32;
-                ev_fingers.entry(PEN_SLOT).or_default().pos.x = if ! mirror_x {
+            }else if evt.code == (if should_wacom_swap { ecodes::ABS_X } else {ecodes::ABS_Y }) { // (wacom)
+                let scaled_value = (evt.value as f32 * scale_wacom) as i32;
+                ev_fingers.entry(PEN_SLOT).or_default().pos.x = if mirror_wacom_x {
                     dims.0 as i32 - 1 - scaled_value
                 } else {
                     scaled_value
@@ -432,7 +448,7 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
             }else if evt.code == ABS_MT_SLOT {
                 current_slot = evt.value;
             } else if evt.code == tc.x {
-                let scaled_value = (evt.value as f32 * scale_touch_x) as i32;
+                let scaled_value = (evt.value as f32 * scale_touch) as i32;
                 ev_fingers.entry(current_slot).or_default().pos.x = if mirror_x {
                     dims.0 as i32 - 1 - scaled_value
                 } else {
@@ -440,7 +456,7 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                 };
                 ev_fingers.entry(current_slot).or_default().pos_updated = true;
             } else if evt.code == tc.y {
-                let scaled_value = (evt.value as f32 * scale_touch_y) as i32;
+                let scaled_value = (evt.value as f32 * scale_touch) as i32;
                 ev_fingers.entry(current_slot).or_default().pos.y = if mirror_y {
                     dims.1 as i32 - 1 - scaled_value
                 } else {
