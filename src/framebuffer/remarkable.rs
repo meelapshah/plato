@@ -124,7 +124,7 @@ impl Framebuffer for RemarkableFramebuffer {
         // as they will be far more helpful and practical.
         match mode {
             UpdateMode::FastMono => {
-                println!("Update fastmono");
+                //println!("Update fastmono");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
@@ -136,7 +136,7 @@ impl Framebuffer for RemarkableFramebuffer {
                 ))
             },
             UpdateMode::Fast => {
-                println!("Update fast");
+                //println!("Update fast");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
@@ -148,7 +148,7 @@ impl Framebuffer for RemarkableFramebuffer {
                 ))
             },
             UpdateMode::Gui => {
-                println!("Update gui");
+                //println!("Update gui");
                 Ok(self.fb.partial_refresh(
                     &new_rect,
                     PartialRefreshMode::Async,
@@ -160,7 +160,7 @@ impl Framebuffer for RemarkableFramebuffer {
                 ))
             },
             UpdateMode::Partial => {
-                println!("Update partial");
+                //println!("Update partial");
                 // EPDC_FLAG_USE_REMARKABLE_DITHER most likely leads to problems here!
                 match self.refresh_quality {
                     RefreshQuality::Fast => {
@@ -214,7 +214,7 @@ impl Framebuffer for RemarkableFramebuffer {
                 }
             },
             UpdateMode::Full => {
-                println!("Update full");
+                //println!("Update full");
                 Ok(self.fb.full_refresh(
                     common::waveform_mode::WAVEFORM_MODE_GC16, // Flashes black white in full mode
                     common::display_temp::TEMP_USE_AMBIENT, // Not such low latency (see comments on this)
