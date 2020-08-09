@@ -13,7 +13,7 @@ porting plato to the reMarkable 2 years ago. ( I Read nice mangas with his port.
 
 - Go the [releases](https://github.com/LinusCDE/plato/releases) and get the latest build (attached file with "dist" in the name).
 - Copy the unpacked contents that file to your device to a folder of your choice (e.g. using scp or an sftp client like Filezilla or WinSCP)
-- SSH into your reMarkable and run the file `plato.sh`. E.g. /home/root/plato/plato.sh`
+- SSH into your reMarkable and run the file `plato.sh`. E.g. `/home/root/plato/plato.sh`
 - Add it to [draft](https://github.com/dixonary/draft-reMarkable) for easier launching without SSH-ing.
 
 By default files are used from the empty media folder you got in the release. You can change this in the Settings.toml.
