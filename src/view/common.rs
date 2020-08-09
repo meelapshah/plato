@@ -125,8 +125,8 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                                    context.settings.wifi),*/
                                EntryKind::Separator,
                                EntryKind::SubMenu("Rotate".to_string(), rotate),
-                               /*EntryKind::Command("Take Screenshot".to_string(),
-                                                   EntryId::TakeScreenshot),*/
+                               EntryKind::Command("Take Screenshot".to_string(),
+                                                   EntryId::TakeScreenshot),
                                EntryKind::Separator,
                                EntryKind::SubMenu("Applications".to_string(), apps),
                                EntryKind::Separator];

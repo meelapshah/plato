@@ -1,5 +1,5 @@
 use std::ops::Drop;
-use anyhow::{Error, Context};
+use anyhow::Error;
 use crate::geom::Rectangle;
 use crate::device::{CURRENT_DEVICE, Model};
 use super::{UpdateMode, Framebuffer};
@@ -12,11 +12,11 @@ use libremarkable::framebuffer::FramebufferRefresh;
 use libremarkable::framebuffer::cgmath;
 use libremarkable::framebuffer::common;
 use std::convert::TryInto;
-use anyhow::anyhow;
 use crate::view::RefreshQuality;
 use mmap;
 use mmap::MemoryMap;
 use std::os::unix::io::AsRawFd;
+use std::fs;
 
 pub struct RemarkableFramebuffer {
     fb: libremarkable::framebuffer::core::Framebuffer<'static>,
@@ -232,36 +232,33 @@ impl Framebuffer for RemarkableFramebuffer {
     }
 
     fn save(&self, path: &str) -> Result<(), Error> {
-        Err(anyhow!("This feature is not yet implemented (started). If you need it, file an issue. (at src/framebuffer/remarkable.rs RemarkableFramebuffer::save())"))
-
-        // Note: When getting the output to work, I came across some weired
-        // artifacts which I thought were due to wrong refesh modes.
-        // So I started an implementation here for debugging purposes.
-        // After the outdates image-lib was a royal pain in the ****
-        // I remembered that there was a "live" example in libremarkable 
-        // which happened to be still on my device.
-        //
-        // So here is the partial implementation of saving stuff.
-        // The img at the end "should" be alright (taken from live 
-        // example in libremarkable).
-        // Probably just add the current image dependency,
-        // get RgbImage to an DynamicImage and just use the
-        // convenient save function.
-        /*let rgb565 = self.fb.dump_region(common::mxcfb_rect {
+        let rgb565 = self.fb.dump_region(common::mxcfb_rect {
                 top: 0,
                 left: 0,
-                width: common::DISPLAYWIDTH as u32,
-                height: common::DISPLAYHEIGHT as u32,
+                width: self.fb.var_screen_info.xres,
+                height: self.fb.var_screen_info.yres,
             }).unwrap();
 
         let rgb888 = libremarkable::framebuffer::storage::rgbimage_from_u8_slice(
-            common::DISPLAYWIDTH.into(),
-            common::DISPLAYHEIGHT.into(),
+            self.fb.var_screen_info.xres,
+            self.fb.var_screen_info.yres,
             &rgb565,
         )
-        .unwrap().to_vec();        
-        let img = libremarkable::image::RgbImage::from_raw(common::DISPLAYWIDTH as u32, common::DISPLAYHEIGHT as u32, rgb888);
-        //libremarkable::image::png::PNGEncoder::new(img);*/
+        .unwrap();
+
+        let mut writer = std::io::BufWriter::new(Vec::new());
+        libremarkable::image::png::PNGEncoder::new(&mut writer)
+            .encode(
+                &*rgb888,
+                self.fb.var_screen_info.xres,
+                self.fb.var_screen_info.yres,
+                libremarkable::image::ColorType::RGB(8),
+            )
+            .unwrap();
+        
+        let png = writer.into_inner().unwrap();
+        fs::write(path, &*png)?;
+        Ok(())        
     }
 
     #[inline]
