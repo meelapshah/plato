@@ -10,7 +10,7 @@ use crate::geom::Rectangle;
 use crate::device::{CURRENT_DEVICE, Model};
 use super::{UpdateMode, Framebuffer};
 use super::mxcfb_sys::*;
-use crate::view::RefreshQuality;
+use crate::settings::RefreshQuality;
 
 impl Into<MxcfbRect> for Rectangle {
     fn into(self) -> MxcfbRect {

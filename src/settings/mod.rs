@@ -50,10 +50,32 @@ impl fmt::Display for ButtonScheme {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum RefreshQuality {
+    Fast,
+    Normal,
+    Better,
+    Perfect,
+}
+
+impl fmt::Display for RefreshQuality {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
+
+impl Default for RefreshQuality {
+    fn default() -> RefreshQuality {
+        RefreshQuality::Normal
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct Settings {
     pub selected_library: usize,
+    pub remarkable_refresh_quality: RefreshQuality,
     pub keyboard_layout: String,
     pub frontlight: bool,
     pub wifi: bool,
@@ -379,6 +401,7 @@ impl Default for Settings {
             battery: BatterySettings::default(),
             frontlight_levels: LightLevels::default(),
             frontlight_presets: Vec::new(),
+            remarkable_refresh_quality: RefreshQuality::default(),
         }
     }
 }

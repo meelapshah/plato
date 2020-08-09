@@ -12,7 +12,7 @@ use libremarkable::framebuffer::FramebufferRefresh;
 use libremarkable::framebuffer::cgmath;
 use libremarkable::framebuffer::common;
 use std::convert::TryInto;
-use crate::view::RefreshQuality;
+use crate::settings::RefreshQuality;
 use mmap;
 use mmap::MemoryMap;
 use std::os::unix::io::AsRawFd;
@@ -31,7 +31,7 @@ impl RemarkableFramebuffer {
             fb: libremarkable::framebuffer::core::Framebuffer::new(fb_device_path),
             monochrome: false,
             inverted: false,
-            refresh_quality: RefreshQuality::Normal
+            refresh_quality: Default::default()
         })
     }
 

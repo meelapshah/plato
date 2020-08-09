@@ -11,7 +11,7 @@ use crate::color::{BLACK, WHITE};
 pub use self::kobo::KoboFramebuffer;
 pub use self::remarkable::RemarkableFramebuffer;
 pub use self::image::Pixmap;
-use crate::view::RefreshQuality;
+use crate::settings::RefreshQuality;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Display {

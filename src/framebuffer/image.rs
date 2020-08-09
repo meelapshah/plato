@@ -3,7 +3,7 @@ use anyhow::{Error, Context, format_err};
 use super::{Framebuffer, UpdateMode};
 use crate::color::WHITE;
 use crate::geom::{Rectangle, lerp};
-use crate::view::RefreshQuality;
+use crate::settings::RefreshQuality;
 
 #[derive(Debug, Clone)]
 pub struct Pixmap {

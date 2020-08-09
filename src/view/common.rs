@@ -87,29 +87,19 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                            EntryId::Launch(AppCmd::Calculator)),
                         EntryKind::Command("Sketch".to_string(),
                                            EntryId::Launch(AppCmd::Sketch))];
-        /*
-        let refresh_qualities = vec![EntryKind::Command("Fast".to_string(),
-                                            EntryId::RefreshQuality(RefreshQuality::Fast)),
-                                     EntryKind::Command("Normal".to_string(),
-                                           EntryId::RefreshQuality(RefreshQuality::Normal)),
-                                     EntryKind::Command("Better".to_string(),
-                                           EntryId::RefreshQuality(RefreshQuality::Better)),
-                                     EntryKind::Command("Perfect".to_string(),
-                                           EntryId::RefreshQuality(RefreshQuality::Perfect)),
-                                    ];*/
         
         let refresh_qualities = vec![EntryKind::RadioButton("Fast".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Fast),
-                                           context.fb.refresh_quality() == RefreshQuality::Fast),
+                                           context.settings.remarkable_refresh_quality == RefreshQuality::Fast),
                                      EntryKind::RadioButton("Normal".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Normal),
-                                           context.fb.refresh_quality() == RefreshQuality::Normal),
+                                           context.settings.remarkable_refresh_quality == RefreshQuality::Normal),
                                      EntryKind::RadioButton("Better".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Better),
-                                           context.fb.refresh_quality() == RefreshQuality::Better),
+                                           context.settings.remarkable_refresh_quality == RefreshQuality::Better),
                                      EntryKind::RadioButton("Perfect".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Perfect),
-                                           context.fb.refresh_quality() == RefreshQuality::Perfect),
+                                           context.settings.remarkable_refresh_quality == RefreshQuality::Perfect),
                                     ];
 
         let mut entries = vec![/*EntryKind::CheckBox("Invert Colors".to_string(),

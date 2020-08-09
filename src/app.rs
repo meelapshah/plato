@@ -15,7 +15,7 @@ use rand_core::SeedableRng;
 use rand_xoshiro::Xoroshiro128Plus;
 use crate::dictionary::{Dictionary, load_dictionary_from_file};
 use crate::framebuffer::{Framebuffer, RemarkableFramebuffer, Display, UpdateMode};
-use crate::view::{View, Event, EntryId, EntryKind, ViewId, AppCmd, RefreshQuality};
+use crate::view::{View, Event, EntryId, EntryKind, ViewId, AppCmd};
 use crate::view::{render, render_region, render_no_wait, render_no_wait_region, handle_event, expose};
 use crate::view::common::{locate, locate_by_id, transfer_notifications, overlapping_rectangle};
 use crate::view::common::{toggle_input_history_menu, toggle_keyboard_layout_menu};
@@ -357,6 +357,7 @@ pub fn run() -> Result<(), Error> {
     }
     context.load_dictionaries();
     context.load_keyboard_layouts();
+    context.fb.set_refresh_quality(context.settings.remarkable_refresh_quality);
 
     let paths = vec![EVENT_BUTTONS.to_string(), EVENT_TOUCH_SCREEN.to_string()];
     let (raw_sender, raw_receiver) = raw_events(paths);
@@ -980,6 +981,7 @@ pub fn run() -> Result<(), Error> {
             },
             Event::Select(EntryId::RefreshQuality(quality)) => {
                 context.fb.set_refresh_quality(quality);
+                context.settings.remarkable_refresh_quality = quality;
                 tx.send(Event::Render(context.fb.rect(), UpdateMode::Gui)).ok();
             },
             Event::Select(EntryId::ToggleIntermissionImage(ref kind, ref path)) => {

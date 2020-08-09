@@ -50,7 +50,7 @@ use fxhash::FxHashMap;
 use downcast_rs::{Downcast, impl_downcast};
 use crate::font::Fonts;
 use crate::document::{Location, TextLocation, TocEntry};
-use crate::settings::{ButtonScheme, FirstColumn, SecondColumn, RotationLock};
+use crate::settings::{ButtonScheme, FirstColumn, SecondColumn, RotationLock, RefreshQuality};
 use crate::metadata::{Info, ZoomMode, SortMethod, TextAlign, SimpleStatus, PageScheme, Margin};
 use crate::geom::{LinearDir, CycleDir, Rectangle, Boundary};
 use crate::framebuffer::{Framebuffer, UpdateMode};
@@ -439,14 +439,6 @@ pub enum EntryKind {
     RadioButton(String, EntryId, bool),
     SubMenu(String, Vec<EntryKind>),
     Separator,
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum RefreshQuality {
-    Fast,
-    Normal,
-    Better,
-    Perfect,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
