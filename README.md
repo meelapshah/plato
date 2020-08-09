@@ -4,23 +4,32 @@
 
 **This is a fork for the reMarkable (gen 1) device.**
 
-Also see [darvin](https://github.com/darvin)'s
-[work](https://github.com/darvin/plato) of 
-porting plato to the reMarkable 2 years ago.
-(I Read a nice mangas with his port. :))
+Also see [darvin](https://github.com/darvin)'s [work](https://github.com/darvin/plato) of
+porting plato to the reMarkable 2 years ago. ( I Read nice mangas with his port. :) )
 
-I wanted to do a new fork of it to maybe enjoy
-some new features. I also wanted to do a
-integration with mango. Building my own UI
-seems to be a bit to much, so I'll try to add it
-to plato once I'm finished porting it.
+## Install on reMarkable
 
-**This repo is wip!** Remarkable-specific setup
-instructions, configuration help and releases are still missing.  
-If you manage to build it, you'll sit before an blank
-home screen.
+### Using an existing build
 
+- Go the [releases](https://github.com/LinusCDE/plato/releases) and get the latest build (attached file with "dist" in the name).
+- Copy the unpacked contents that file to your device to a folder of your choice (e.g. using scp or an sftp client like Filezilla or WinSCP)
+- SSH into your reMarkable and run the file `plato.sh`. E.g. /home/root/plato/plato.sh`
+- Add it to [draft](https://github.com/dixonary/draft-reMarkable) for easier launching without SSH-ing.
+
+By default files are used from the empty media folder you got in the release. You can change this in the Settings.toml.
+
+Notes: The software automatically recognizes the running UI (xochitl) and kills it. If it did so, you'll only have the option to "Quit to Xochitl", which will automatically start xochitl again when quitting. Should the software crash (had one case with a bad czb file) the screen will seem frozen. Either launch draft again, or hold the power button for about 10 seconds (= poweroff) and then hold it again to start the device again.
+
+### Compiling yourself
+
+You need rust (nightly) the oecore toolchain and the armv7-unknown-linux-gnueabihf target.
+
+After that, you can build the software using build.sh and create the same directory as attached using `dist.sh` (folder dist/).
+
+Or just look at the file `make_remarkable.sh` which checks the above condition and runs a full clean build for you.
 Documentation: [GUIDE](doc/GUIDE.md), [MANUAL](doc/MANUAL.md) and [BUILD](doc/BUILD.md).
+
+<img width="50%" src="https://user-images.githubusercontent.com/22298664/89742481-ae299180-da9a-11ea-9f69-7ecd54e16925.png">
 
 ## Supported firmwares
 
