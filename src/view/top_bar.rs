@@ -110,22 +110,24 @@ impl View for TopBar {
         let side = rect.height() as i32;
         self.children[0].resize(rect![rect.min, rect.min+side], hub, context);
         let clock_width = self.children[2].rect().width() as i32;
-        let clock_rect = rect![rect.max - pt!(3*side + clock_width, side),
-                               rect.max - pt!(3*side, 0)];
+        let clock_rect = rect![rect.max - pt!(2*side + clock_width, side),
+                               rect.max - pt!(2*side, 0)];
         self.children[1].resize(rect![rect.min.x + side,
                                       rect.min.y,
                                       clock_rect.min.x,
                                       rect.max.y],
                                 hub, context);
         self.children[2].resize(clock_rect, hub, context);
-        self.children[3].resize(rect![rect.max - pt!(3*side, side),
-                                      rect.max - pt!(2*side, 0)],
+        self.children[3].resize(rect![rect.max - pt!(2*side, side),
+                                      rect.max - pt!(1*side, 0)],
                                 hub, context);
-        self.children[4].resize(rect![rect.max - pt!(2*side, side),
+        /*self.children[4].resize(rect![rect.max - pt!(1*side, side),
                                       rect.max - pt!(side, 0)],
+                                hub, context);*/
+        self.children[4].resize(rect![rect.max-side, rect.max],
                                 hub, context);
-        self.children[5].resize(rect![rect.max-side, rect.max],
-                                hub, context);
+        /*self.children[5].resize(rect![rect.max-side, rect.max],
+                                hub, context);*/
         self.rect = rect;
     }
 
