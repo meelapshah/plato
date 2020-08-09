@@ -54,7 +54,7 @@ filetime = "0.2.11"
 fxhash = "0.2.1"
 rand_core = "0.5.1"
 rand_xoshiro = "0.4.0"
-libremarkable = { git = "https://github.com/LinusCDE/libremarkable.git", rev = "2993a73" }
+libremarkable = { git = "https://github.com/LinusCDE/libremarkable.git", rev = "254d008" }
 mmap = "0.1.1"
 
 [dependencies.getopts]
