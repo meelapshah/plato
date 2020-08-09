@@ -29,7 +29,9 @@ After that, you can build the software using build.sh and create the same direct
 Or just look at the file `make_remarkable.sh` which checks the above condition and runs a full clean build for you.
 Documentation: [GUIDE](doc/GUIDE.md), [MANUAL](doc/MANUAL.md) and [BUILD](doc/BUILD.md).
 
-<img width="50%" src="https://user-images.githubusercontent.com/22298664/89742481-ae299180-da9a-11ea-9f69-7ecd54e16925.png">
+<img width="45%" src="https://transfer.cosmos-ink.net/OyWia/screen1.jpg"> &nbsp; <img width="45%" src="https://transfer.cosmos-ink.net/qruLv/screen2.jpg">
+<img width="45%" src="https://transfer.cosmos-ink.net/13mwA8/screen3.jpg">
+
 
 ## Supported firmwares
 
