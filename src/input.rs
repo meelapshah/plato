@@ -15,6 +15,7 @@ use anyhow::{Error, Context};
 use libremarkable::input::ecodes;
 use libremarkable::framebuffer::common;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 // Event types
 pub const EV_SYN: u16 = 0x00;
@@ -63,6 +64,11 @@ pub const KEY_FORWARD: u16 = ecodes::KEY_RIGHT;
 pub const KEY_ROTATE_DISPLAY: u16 = 0xffff;
 pub const KEY_BUTTON_SCHEME: u16 = 0xfffe;
 pub const SLEEP_COVER: u16 = 59;
+
+pub struct InputFilterCommand {
+    pub path: String,
+    pub filtered: bool,
+}
 
 pub const SINGLE_TOUCH_CODES: TouchCodes = TouchCodes {
     pressure: ABS_PRESSURE,
@@ -218,47 +224,79 @@ pub fn seconds(time: libc::timeval) -> f64 {
     time.tv_sec as f64 + time.tv_usec as f64 / 1e6
 }
 
-pub fn raw_events(paths: Vec<String>) -> (Sender<InputEvent>, Receiver<InputEvent>) {
+pub fn raw_events(paths: Vec<String>, filter_cmd_rx: Receiver<InputFilterCommand>) -> (Sender<InputEvent>, Receiver<InputEvent>) {
     let (tx, rx) = mpsc::channel();
     let tx2 = tx.clone();
-    thread::spawn(move || parse_raw_events(&paths, &tx));
+    thread::spawn(move || parse_raw_events(&paths, &tx, &filter_cmd_rx));
     (tx2, rx)
 }
 
-pub fn parse_raw_events(paths: &[String], tx: &Sender<InputEvent>) -> Result<(), Error> {
-    let mut files = Vec::new();
-    let mut pfds = Vec::new();
+pub fn parse_raw_events(paths: &[String], tx: &Sender<InputEvent>, filter_cmd_rx: &Receiver<InputFilterCommand>) -> Result<(), Error> {
+    let mut filtered_devices: HashSet<String> = HashSet::new();
 
-    for path in paths.iter() {
-        let file = File::open(path)
-                        .with_context(|| format!("Can't open input file {}", path))?;
-        let fd = file.as_raw_fd();
-        files.push(file);
-        pfds.push(libc::pollfd {
-            fd,
-            events: libc::POLLIN,
-            revents: 0,
-        });
-    }
+    'body: loop {
+        // (Re-)Init and poll (rerun on InputFilterCommand)
 
-    loop {
-        let ret = unsafe { libc::poll(pfds.as_mut_ptr(), pfds.len() as libc::nfds_t, -1) };
-        if ret < 0 {
-            break;
+        let mut files = Vec::new();
+        let mut pfds = Vec::new();
+
+        for path in paths.iter() {
+            if filtered_devices.contains(path) {
+                // Don't open filtered file
+                continue;
+            }
+            let file = File::open(path)
+                            .with_context(|| format!("Can't open input file {}", path))?;
+            let fd = file.as_raw_fd();
+            files.push(file);
+            pfds.push(libc::pollfd {
+                fd,
+                events: libc::POLLIN,
+                revents: 0,
+            });
         }
-        for (pfd, mut file) in pfds.iter().zip(&files) {
-            if pfd.revents & libc::POLLIN != 0 {
-                let mut input_event = MaybeUninit::<InputEvent>::uninit();
-                unsafe {
-                    let event_slice = slice::from_raw_parts_mut(input_event.as_mut_ptr() as *mut u8,
-                                                                mem::size_of::<InputEvent>());
-                    if file.read_exact(event_slice).is_err() {
-                        break;
+
+        loop {
+            let mut any_changed = false;
+            for command in filter_cmd_rx.try_recv() {
+                let changed = if command.filtered {
+                    // Add to filterlist
+                    filtered_devices.insert(command.path.clone())
+                }else {
+                    // Remove from filterlist
+    
+                    filtered_devices.remove(&command.path)
+                };
+
+                if changed {
+                    any_changed = true;
+                }
+            }
+            if any_changed {
+                // Resetup
+                continue 'body; // "files: Vec<File>" goes out of scope and files are closed
+            }
+
+            let ret = unsafe { libc::poll(pfds.as_mut_ptr(), pfds.len() as libc::nfds_t, -1) };
+            if ret < 0 {
+                break;
+            }
+            for (pfd, mut file) in pfds.iter().zip(&files) {
+                if pfd.revents & libc::POLLIN != 0 {
+                    let mut input_event = MaybeUninit::<InputEvent>::uninit();
+                    unsafe {
+                        let event_slice = slice::from_raw_parts_mut(input_event.as_mut_ptr() as *mut u8,
+                                                                    mem::size_of::<InputEvent>());
+                        if file.read_exact(event_slice).is_err() {
+                            break;
+                        }
+                        tx.send(input_event.assume_init()).ok();
                     }
-                    tx.send(input_event.assume_init()).ok();
                 }
             }
         }
+
+        break;
     }
 
     Ok(())
@@ -326,11 +364,12 @@ pub fn device_events(rx: Receiver<InputEvent>, display: Display, button_scheme: 
 
 pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, display: Display, button_scheme: ButtonScheme) {
     let mut current_slot: i32 = 0; // Basically for which finger id to events are meant
+    const PEN_SLOT: i32 = 100; // Figer id for wacom pen
     let mut last_activity = -60;
     let Display { mut dims, mut rotation } = display;
 
-
     // Only some private helper struct for state-management
+    #[derive(Debug)]
     struct EvFinger {
         pos: Point,
         pos_updated: bool, // Report motion at SYN_REPORT?
@@ -360,8 +399,11 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
 
     let (mut mirror_x, mut mirror_y) = CURRENT_DEVICE.should_mirror_axes(rotation);
     // Scale touchscreen of remarkable properly
-    let scale_x = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
-    let scale_y = common::DISPLAYHEIGHT as f32 / common::MTHEIGHT as f32;
+    let scale_touch_x = common::DISPLAYWIDTH as f32 / common::MTWIDTH as f32;
+    let scale_touch_y = common::DISPLAYHEIGHT as f32 / common::MTHEIGHT as f32;
+
+    let scale_wacom_x = common::DISPLAYWIDTH as f32 / common::WACOMWIDTH as f32;
+    let scale_wacom_y = common::DISPLAYHEIGHT as f32 / common::WACOMHEIGHT as f32;
 
     if CURRENT_DEVICE.should_swap_axes(rotation) {
         mem::swap(&mut tc.x, &mut tc.y);
@@ -371,10 +413,26 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
 
     while let Ok(evt) = rx.recv() {
         if evt.kind == EV_ABS {
-            if evt.code == ABS_MT_SLOT {
+            if evt.code == ecodes::ABS_X { // (wacom)
+                let scaled_value = (evt.value as f32 * scale_wacom_x) as i32;
+                ev_fingers.entry(PEN_SLOT).or_default().pos.y = if mirror_y {
+                    dims.1 as i32 - 1 - scaled_value
+                } else {
+                    scaled_value
+                };
+                ev_fingers.entry(PEN_SLOT).or_default().pos_updated = true;
+            }else if evt.code == ecodes::ABS_Y { // (wacom)
+                let scaled_value = (evt.value as f32 * scale_wacom_y) as i32;
+                ev_fingers.entry(PEN_SLOT).or_default().pos.x = if ! mirror_x {
+                    dims.0 as i32 - 1 - scaled_value
+                } else {
+                    scaled_value
+                };
+                ev_fingers.entry(PEN_SLOT).or_default().pos_updated = true;
+            }else if evt.code == ABS_MT_SLOT {
                 current_slot = evt.value;
             } else if evt.code == tc.x {
-                let scaled_value = (evt.value as f32 * scale_x) as i32;
+                let scaled_value = (evt.value as f32 * scale_touch_x) as i32;
                 ev_fingers.entry(current_slot).or_default().pos.x = if mirror_x {
                     dims.0 as i32 - 1 - scaled_value
                 } else {
@@ -382,7 +440,7 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                 };
                 ev_fingers.entry(current_slot).or_default().pos_updated = true;
             } else if evt.code == tc.y {
-                let scaled_value = (evt.value as f32 * scale_x) as i32;
+                let scaled_value = (evt.value as f32 * scale_touch_y) as i32;
                 ev_fingers.entry(current_slot).or_default().pos.y = if mirror_y {
                     dims.1 as i32 - 1 - scaled_value
                 } else {
@@ -401,9 +459,11 @@ pub fn parse_device_events(rx: &Receiver<InputEvent>, ty: &Sender<DeviceEvent>, 
                     ev_fingers.entry(current_slot).or_default().pressed = true;
                 }
             } else if evt.code == ABS_MT_TRACKING_ID {
-                    if evt.value == -1 { // Finger was raised / Guesture/Track ended
-                        ev_fingers.entry(current_slot).or_default().pressed = false;
-                    }
+                if evt.value == -1 { // Finger was raised / Guesture/Track ended
+                    ev_fingers.entry(current_slot).or_default().pressed = false;
+                }
+            }else if evt.code == ecodes::ABS_PRESSURE {
+                ev_fingers.entry(PEN_SLOT).or_default().pressed = evt.value > 0;
             }
         } else if evt.kind == EV_SYN {
             // The absolute value accounts for the wrapping around that might occur,

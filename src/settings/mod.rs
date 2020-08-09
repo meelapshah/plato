@@ -11,6 +11,7 @@ use crate::frontlight::LightLevels;
 use crate::color::BLACK;
 use crate::device::CURRENT_DEVICE;
 use crate::unit::mm_to_px;
+use crate::app::{EVENT_TOUCH_SCREEN, EVENT_WACOM};
 
 pub use self::preset::{LightPreset, guess_frontlight};
 
@@ -66,8 +67,51 @@ impl fmt::Display for RefreshQuality {
 }
 
 impl Default for RefreshQuality {
-    fn default() -> RefreshQuality {
+    fn default() -> Self {
         RefreshQuality::Normal
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum InputSource {
+    Touch, // Multitouch
+    Pen, // Wacom Digizer
+}
+
+impl InputSource {
+    pub fn to_path(&self) -> &str {
+        match self {
+            InputSource::Pen => EVENT_WACOM,
+            InputSource::Touch => EVENT_TOUCH_SCREEN,
+        }
+    }
+
+    pub fn to_vec() -> Vec<Self> {
+        vec![InputSource::Pen, InputSource::Touch]
+    }
+}
+
+impl fmt::Display for InputSource {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct RemarkableSettings {
+    pub refresh_quality: RefreshQuality,
+    pub input_sources: Vec<InputSource>,
+}
+
+impl Default for RemarkableSettings {
+    fn default() -> Self {
+        RemarkableSettings {
+            refresh_quality: RefreshQuality::default(),
+            input_sources: vec![InputSource::Touch, InputSource::Pen]
+        }
     }
 }
 
@@ -75,7 +119,6 @@ impl Default for RefreshQuality {
 #[serde(default, rename_all = "kebab-case")]
 pub struct Settings {
     pub selected_library: usize,
-    pub remarkable_refresh_quality: RefreshQuality,
     pub keyboard_layout: String,
     pub frontlight: bool,
     pub wifi: bool,
@@ -86,6 +129,7 @@ pub struct Settings {
     pub button_scheme: ButtonScheme,
     pub auto_suspend: u8,
     pub auto_power_off: u8,
+    pub remarkable: RemarkableSettings,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub libraries: Vec<LibrarySettings>,
     #[serde(skip_serializing_if = "FxHashMap::is_empty")]
@@ -401,7 +445,7 @@ impl Default for Settings {
             battery: BatterySettings::default(),
             frontlight_levels: LightLevels::default(),
             frontlight_presets: Vec::new(),
-            remarkable_refresh_quality: RefreshQuality::default(),
+            remarkable: RemarkableSettings::default(),
         }
     }
 }

@@ -25,11 +25,11 @@ use crate::view::keyboard::{Layout};
 use crate::view::dictionary::Dictionary as DictionaryApp;
 use crate::view::calculator::Calculator;
 use crate::view::sketch::Sketch;
-use crate::input::{DeviceEvent, PowerSource, ButtonCode, ButtonStatus, VAL_RELEASE, VAL_PRESS};
+use crate::input::{DeviceEvent, PowerSource, ButtonCode, ButtonStatus, VAL_RELEASE, VAL_PRESS, InputFilterCommand};
 use crate::input::{raw_events, device_events, usb_events, display_rotate_event, button_scheme_event};
 use crate::gesture::{GestureEvent, gesture_events};
 use crate::helpers::{load_json, load_toml, save_toml, IsHidden};
-use crate::settings::{ButtonScheme, Settings, SETTINGS_PATH, RotationLock};
+use crate::settings::{ButtonScheme, Settings, SETTINGS_PATH, RotationLock, InputSource};
 use crate::frontlight::{Frontlight, StandardFrontlight, NaturalFrontlight, PremixedFrontlight, FakeFrontlight};
 use crate::lightsensor::{LightSensor, KoboLightSensor};
 use crate::battery::{Battery, RemarkableBattery};
@@ -48,7 +48,8 @@ pub const APP_NAME: &str = "Plato";
 const FB_DEVICE: &str = "/dev/fb0";
 const RTC_DEVICE: &str = "/dev/rtc0";
 const EVENT_BUTTONS: &str = "/dev/input/event2"; // reMarkable gpio-keys
-const EVENT_TOUCH_SCREEN: &str = "/dev/input/event1"; // reMarkable cyttsp5_mt (Multitouch)
+pub const EVENT_TOUCH_SCREEN: &str = "/dev/input/event1"; // reMarkable cyttsp5_mt (Multitouch)
+pub const EVENT_WACOM: &str = "/dev/input/event0"; // reMarkable Wacom I2C Digitizer (Pen input)
 const KOBO_UPDATE_BUNDLE: &str = "/mnt/onboard/.kobo/KoboRoot.tgz";
 const KEYBOARD_LAYOUTS_DIRNAME: &str = "keyboard-layouts";
 const DICTIONARIES_DIRNAME: &str = "dictionaries";
@@ -357,10 +358,19 @@ pub fn run() -> Result<(), Error> {
     }
     context.load_dictionaries();
     context.load_keyboard_layouts();
-    context.fb.set_refresh_quality(context.settings.remarkable_refresh_quality);
+    context.fb.set_refresh_quality(context.settings.remarkable.refresh_quality);
 
-    let paths = vec![EVENT_BUTTONS.to_string(), EVENT_TOUCH_SCREEN.to_string()];
-    let (raw_sender, raw_receiver) = raw_events(paths);
+    let paths = vec![EVENT_BUTTONS.to_string(), EVENT_TOUCH_SCREEN.to_string(), EVENT_WACOM.to_string()];
+    let (filter_input_cmd_sender, filter_input_cmd_receiver) = mpsc::channel();
+    for source in InputSource::to_vec() {
+        if ! context.settings.remarkable.input_sources.contains(&source) {
+            filter_input_cmd_sender.send(InputFilterCommand {
+                path: source.to_path().to_owned(),
+                filtered: true,
+            }).unwrap();
+        }
+    }
+    let (raw_sender, raw_receiver) = raw_events(paths, filter_input_cmd_receiver);
     let touch_screen = gesture_events(device_events(raw_receiver, context.display, context.settings.button_scheme));
     let usb_port = usb_events();
 
@@ -981,7 +991,50 @@ pub fn run() -> Result<(), Error> {
             },
             Event::Select(EntryId::RefreshQuality(quality)) => {
                 context.fb.set_refresh_quality(quality);
-                context.settings.remarkable_refresh_quality = quality;
+                context.settings.remarkable.refresh_quality = quality;
+                tx.send(Event::Render(context.fb.rect(), UpdateMode::Gui)).ok();
+            },
+            Event::Select(EntryId::ToggleInputSource(source)) => {
+                if context.settings.remarkable.input_sources.contains(&source) {
+                    // Remove source
+                    if context.settings.remarkable.input_sources.len() == 1 {
+                        // Remove would remove all input sources
+                        // This should not be allowed!
+                        let other_source = match source {
+                            InputSource::Pen => InputSource::Touch,
+                            InputSource::Touch => InputSource::Pen
+                        };
+                        context.settings.remarkable.input_sources.push(other_source);
+                        
+                        // Open file
+                        filter_input_cmd_sender.send(InputFilterCommand {
+                            path: other_source.to_path().to_owned(),
+                            filtered: false,
+                        }).unwrap();
+                        // Notify
+                        let msg = format!("Automatically enabled input by {}", other_source);
+                        let notif = Notification::new(ViewId::TakeScreenshotNotif,
+                                              msg, &tx, &mut context);
+                        view.children_mut().push(Box::new(notif) as Box<dyn View>);
+                    }
+                    let source_index = context.settings.remarkable.input_sources.iter().position(|&e| e == source).unwrap();
+                    context.settings.remarkable.input_sources.remove(source_index);
+
+                    // Close file
+                    filter_input_cmd_sender.send(InputFilterCommand {
+                        path: source.to_path().to_owned(),
+                        filtered: true,
+                    }).unwrap();
+                }else {
+                    // Add source
+                    context.settings.remarkable.input_sources.push(source);
+                    // Open file
+                    filter_input_cmd_sender.send(InputFilterCommand {
+                        path: source.to_path().to_owned(),
+                        filtered: false,
+                    }).unwrap();
+                }
+
                 tx.send(Event::Render(context.fb.rect(), UpdateMode::Gui)).ok();
             },
             Event::Select(EntryId::ToggleIntermissionImage(ref kind, ref path)) => {

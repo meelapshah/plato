@@ -2,7 +2,7 @@ use std::env;
 use std::sync::mpsc;
 use chrono::Local;
 use crate::device::CURRENT_DEVICE;
-use crate::settings::{ButtonScheme, RotationLock};
+use crate::settings::{ButtonScheme, RotationLock, InputSource};
 use crate::framebuffer::UpdateMode;
 use crate::geom::{Point, Rectangle};
 use super::{View, Event, Hub, ViewId, AppCmd, EntryId, EntryKind};
@@ -90,17 +90,25 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
         
         let refresh_qualities = vec![EntryKind::RadioButton("Fast".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Fast),
-                                           context.settings.remarkable_refresh_quality == RefreshQuality::Fast),
+                                           context.settings.remarkable.refresh_quality == RefreshQuality::Fast),
                                      EntryKind::RadioButton("Normal".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Normal),
-                                           context.settings.remarkable_refresh_quality == RefreshQuality::Normal),
+                                           context.settings.remarkable.refresh_quality == RefreshQuality::Normal),
                                      EntryKind::RadioButton("Better".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Better),
-                                           context.settings.remarkable_refresh_quality == RefreshQuality::Better),
+                                           context.settings.remarkable.refresh_quality == RefreshQuality::Better),
                                      EntryKind::RadioButton("Perfect".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Perfect),
-                                           context.settings.remarkable_refresh_quality == RefreshQuality::Perfect),
+                                           context.settings.remarkable.refresh_quality == RefreshQuality::Perfect),
                                     ];
+        
+        let input_sources = vec![EntryKind::CheckBox("Touch".to_string(),
+                                      EntryId::ToggleInputSource(InputSource::Touch),
+                                      context.settings.remarkable.input_sources.contains(&InputSource::Touch)),
+                                EntryKind::CheckBox("Pen".to_string(),
+                                      EntryId::ToggleInputSource(InputSource::Pen),
+                                      context.settings.remarkable.input_sources.contains(&InputSource::Pen)),
+                              ];
 
         let mut entries = vec![/*EntryKind::CheckBox("Invert Colors".to_string(),
                                                    EntryId::ToggleInverted,
@@ -110,6 +118,8 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                                    context.fb.monochrome()),*/
                                EntryKind::SubMenu("Refresh Quality".to_string(),
                                                    refresh_qualities),
+                               EntryKind::SubMenu("Input by".to_string(),
+                                                   input_sources),
                                /*EntryKind::CheckBox("Enable WiFi".to_string(),
                                                    EntryId::ToggleWifi,
                                                    context.settings.wifi),*/
