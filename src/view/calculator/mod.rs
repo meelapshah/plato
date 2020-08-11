@@ -648,4 +648,8 @@ impl View for Calculator {
     fn children_mut(&mut self) -> &mut Vec<Box<dyn View>> {
         &mut self.children
     }
+
+    fn id(&self) -> Option<ViewId> {
+        Some(ViewId::HelloApp)
+    }
 }

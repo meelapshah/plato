@@ -40,6 +40,7 @@ pub mod reader;
 pub mod dictionary;
 pub mod calculator;
 pub mod sketch;
+pub mod helloapp;
 
 use std::time::Duration;
 use std::path::PathBuf;
@@ -309,6 +310,7 @@ pub enum AppCmd {
         query: String,
         language: String,
     },
+    HelloApp,
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
@@ -374,6 +376,7 @@ pub enum ViewId {
     LowBatteryNotif,
     NetUpNotif,
     SubMenu(u8),
+    HelloApp,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
