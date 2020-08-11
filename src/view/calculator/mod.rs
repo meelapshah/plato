@@ -650,6 +650,6 @@ impl View for Calculator {
     }
 
     fn id(&self) -> Option<ViewId> {
-        Some(ViewId::HelloApp)
+        Some(ViewId::CalculatorInput)
     }
 }

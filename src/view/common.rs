@@ -87,8 +87,8 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
                                            EntryId::Launch(AppCmd::Calculator)),
                         EntryKind::Command("Sketch".to_string(),
                                            EntryId::Launch(AppCmd::Sketch)),
-                        EntryKind::Command("HelloApp".to_string(),
-                                           EntryId::Launch(AppCmd::HelloApp)),];
+                        EntryKind::Command("Mango".to_string(),
+                                           EntryId::Launch(AppCmd::Mango)),];
         
         let refresh_qualities = vec![EntryKind::RadioButton("Fast".to_string(),
                                            EntryId::RefreshQuality(RefreshQuality::Fast),

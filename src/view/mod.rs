@@ -40,7 +40,7 @@ pub mod reader;
 pub mod dictionary;
 pub mod calculator;
 pub mod sketch;
-pub mod helloapp;
+pub mod mango;
 
 use std::time::Duration;
 use std::path::PathBuf;
@@ -300,6 +300,7 @@ pub enum Event {
     Reseed,
     Back,
     Quit,
+    Mango(mango::MangoEvent),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -310,7 +311,7 @@ pub enum AppCmd {
         query: String,
         language: String,
     },
-    HelloApp,
+    Mango,
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
@@ -376,7 +377,7 @@ pub enum ViewId {
     LowBatteryNotif,
     NetUpNotif,
     SubMenu(u8),
-    HelloApp,
+    Mango,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

@@ -43,7 +43,7 @@ use crate::device::{CURRENT_DEVICE, Orientation, FrontlightKind};
 use crate::library::Library;
 use crate::font::Fonts;
 use crate::rtc::Rtc;
-use crate::view::helloapp::HelloApp;
+use crate::view::mango::Mango;
 
 pub const APP_NAME: &str = "Plato";
 const FB_DEVICE: &str = "/dev/fb0";
@@ -911,7 +911,7 @@ pub fn run() -> Result<(), Error> {
                     },
                     AppCmd::Calculator => Box::new(Calculator::new(context.fb.rect(), &tx, &mut context)?),
                     AppCmd::Dictionary { ref query, ref language } => Box::new(DictionaryApp::new(context.fb.rect(), query, language, &tx, &mut context)),
-                    AppCmd::HelloApp => Box::new(HelloApp::new(context.fb.rect(), &tx, &mut context))
+                    AppCmd::Mango => Box::new(Mango::new(context.fb.rect(), &tx, &mut context))
                 };
                 transfer_notifications(view.as_mut(), next_view.as_mut(), &mut context);
                 history.push(HistoryItem {

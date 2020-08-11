@@ -115,6 +115,25 @@ impl Default for RemarkableSettings {
     }
 }
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct MangoSettings {
+    pub url: String,
+    pub username: String,
+    pub password: String,
+}
+
+impl Default for MangoSettings {
+    fn default() -> Self {
+        MangoSettings {
+            url: "".to_owned(),
+            username: "".to_owned(),
+            password: "".to_owned(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct Settings {
@@ -130,6 +149,7 @@ pub struct Settings {
     pub auto_suspend: u8,
     pub auto_power_off: u8,
     pub remarkable: RemarkableSettings,
+    pub mango: MangoSettings,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub libraries: Vec<LibrarySettings>,
     #[serde(skip_serializing_if = "FxHashMap::is_empty")]
@@ -441,6 +461,7 @@ impl Default for Settings {
             frontlight_levels: LightLevels::default(),
             frontlight_presets: Vec::new(),
             remarkable: RemarkableSettings::default(),
+            mango: MangoSettings::default(),
         }
     }
 }
