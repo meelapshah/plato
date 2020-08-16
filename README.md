@@ -30,7 +30,7 @@ Or just look at the file `make_remarkable.sh` which checks the above condition a
 Documentation: [GUIDE](doc/GUIDE.md), [MANUAL](doc/MANUAL.md) and [BUILD](doc/BUILD.md).
 
 <img width="45%" src="https://transfer.cosmos-ink.net/OyWia/screen1.jpg"> &nbsp; <img width="45%" src="https://transfer.cosmos-ink.net/qruLv/screen2.jpg">
-<img width="45%" src="https://transfer.cosmos-ink.net/13mwA8/screen3.jpg">
+<img width="45%" src="https://transfer.cosmos-ink.net/vaCwx/screen3.jpg">
 
 
 ## Supported firmwares
