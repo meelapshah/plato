@@ -7,9 +7,11 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::collections::{BTreeMap, VecDeque};
 use std::time::{Duration, Instant};
 use anyhow::{Error, Context as ResultExt, format_err};
+use clap::{Clap, crate_version, crate_authors};
 use fxhash::FxHashMap;
 use chrono::Local;
 use globset::Glob;
+use lazy_static::lazy_static;
 use walkdir::WalkDir;
 use rand_core::SeedableRng;
 use rand_xoshiro::Xoroshiro128Plus;
@@ -60,6 +62,18 @@ const BATTERY_REFRESH_INTERVAL: Duration = Duration::from_secs(299);
 const AUTO_SUSPEND_REFRESH_INTERVAL: Duration = Duration::from_secs(60);
 const SUSPEND_WAIT_DELAY: Duration = Duration::from_secs(15);
 const PREPARE_SUSPEND_WAIT_DELAY: Duration = Duration::from_secs(3);
+
+#[derive(Clap)]
+#[clap(version = crate_version!(), author = crate_authors!())]
+struct Opts {
+    #[clap(long, short, about = "Don't stop xochitl service when a xochitl process is found.")]
+    spare_xochitl: bool,
+}
+
+lazy_static! {
+    static ref CLI_OPTS: Opts = Opts::parse();
+}
+
 
 pub struct Context {
     pub fb: Box<dyn Framebuffer>,
@@ -448,11 +462,13 @@ pub fn run() -> Result<(), Error> {
     schedule_task(TaskId::CheckBattery, Event::CheckBattery,
                   BATTERY_REFRESH_INTERVAL, &tx, &mut tasks);
 
-    if let Ok(status) = Command::new("pidof").arg("xochitl").status() {
-        if status.code().unwrap() == 0 {
-            Command::new("systemctl").arg("stop").arg("xochitl").status().ok();
-            context.killed_xochitl = true;
-            println!("Xochitl was found and killed. You may only exit by starting Xochitl again.")
+    if ! CLI_OPTS.spare_xochitl {
+        if let Ok(status) = Command::new("pidof").arg("xochitl").status() {
+            if status.code().unwrap() == 0 {
+                Command::new("systemctl").arg("stop").arg("xochitl").status().ok();
+                context.killed_xochitl = true;
+                println!("Xochitl was found and killed. You may only exit by starting Xochitl again.")
+            }
         }
     }
 

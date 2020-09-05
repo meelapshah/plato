@@ -56,6 +56,7 @@ rand_core = "0.5.1"
 rand_xoshiro = "0.4.0"
 libremarkable = { git = "https://github.com/LinusCDE/libremarkable.git", rev = "254d008" }
 mmap = "0.1.1"
+clap = "3.0.0-beta.1"
 
 [dependencies.getopts]
 version = "0.2.21"
@@ -87,3 +88,6 @@ optional = true
 importer = ["getopts"]
 emulator = ["sdl2"]
 fetcher = ["reqwest", "crossbeam-channel", "signal-hook"]
+
+#[profile.release]
+#lto = true
