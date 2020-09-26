@@ -1,5 +1,5 @@
 name=Plato
 desc=Document reader port
-call=/opt/bin/plato --spare-xochitl
+call=/opt/bin/plato
 term=:
 imgFile=plato
