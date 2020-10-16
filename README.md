@@ -1,5 +1,5 @@
 [![rm1](https://img.shields.io/badge/rM1-supported-green)](https://remarkable.com/store/remarkable)
-[![rm2](https://img.shields.io/badge/rM2-unknown-yellow)](https://remarkable.com/store/remarkable-2)
+[![rm2](https://img.shields.io/badge/rM2-unsupported-red)](https://remarkable.com/store/remarkable-2)
 [![opkg](https://img.shields.io/badge/OPKG-plato-blue)](https://github.com/matteodelabre/toltec)
 [![launchers](https://img.shields.io/badge/Launchers-supported-green)](https://github.com/reHackable/awesome-reMarkable#launchers)
 
@@ -37,6 +37,9 @@ Documentation: [GUIDE](doc/GUIDE.md), [MANUAL](doc/MANUAL.md) and [BUILD](doc/BU
 <img width="45%" src="https://transfer.cosmos-ink.net/OyWia/screen1.jpg"> &nbsp; <img width="45%" src="https://transfer.cosmos-ink.net/qruLv/screen2.jpg">
 <img width="45%" src="https://transfer.cosmos-ink.net/vaCwx/screen3.jpg">
 
+## reMarkable 2 support
+
+As of now the software will not work at all on the reMarkable 2. It will need some adjustments to recognize the new model but also rely on people figuring out the framebuffer and updating libremarkable to use it. As soon as libremarkable supports the new framebuffer, I should be able to get this to work on it as well.
 
 ## Supported firmwares
 
