@@ -144,7 +144,7 @@ pub fn toggle_main_menu(view: &mut dyn View, rect: Rectangle, enable: Option<boo
             if ! context.killed_xochitl {
                 entries.push(EntryKind::Command("Quit".to_string(), EntryId::Quit));
             }
-            entries.push(EntryKind::Command("Quit to Xochitl".to_string(), EntryId::QuitToXochitl));
+            // entries.push(EntryKind::Command("Quit to Xochitl".to_string(), EntryId::QuitToXochitl));
         }
 
 
