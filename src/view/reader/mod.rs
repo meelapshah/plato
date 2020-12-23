@@ -2404,7 +2404,8 @@ impl Reader {
 
 impl View for Reader {
     fn handle_event(&mut self, evt: &Event, hub: &Hub, _bus: &mut Bus, context: &mut Context) -> bool {
-        match *evt {
+        let prev_current_page = self.current_page;
+        let ret = match *evt {
             Event::Gesture(GestureEvent::Rotate { quarter_turns, .. }) if quarter_turns != 0 => {
                 let (_, dir) = CURRENT_DEVICE.mirroring_scheme();
                 let n = (4 + (context.display.rotation - dir * quarter_turns)) % 4;
@@ -3449,7 +3450,41 @@ impl View for Reader {
                 true
             },
             _ => false,
+        };
+        if let Some(ref mut r) = self.info.reader {
+            if self.current_page == prev_current_page {
+                return ret
+            }
+            r.current_page = self.current_page;
+            r.pages_count = self.pages_count;
+            r.finished = self.finished;
+
+            if self.view_port.zoom_mode == ZoomMode::FitToPage {
+                r.zoom_mode = None;
+                r.top_offset = None;
+            } else {
+                r.zoom_mode = Some(self.view_port.zoom_mode);
+                r.top_offset = Some(self.view_port.top_offset);
+            }
+
+            r.rotation = Some(CURRENT_DEVICE.to_canonical(context.display.rotation));
+
+            if (self.contrast.exponent - DEFAULT_CONTRAST_EXPONENT).abs() > f32::EPSILON {
+                r.contrast_exponent = Some(self.contrast.exponent);
+                if (self.contrast.gray - DEFAULT_CONTRAST_GRAY).abs() > f32::EPSILON {
+                    r.contrast_gray = Some(self.contrast.gray);
+                } else {
+                    r.contrast_gray = None;
+                }
+            } else {
+                r.contrast_exponent = None;
+                r.contrast_gray = None;
+            }
+
+            context.library.sync_reader_info(&self.info.file.path, r);
+            context.library.flush();
         }
+        ret
     }
 
     fn render(&self, fb: &mut dyn Framebuffer, rect: Rectangle, _fonts: &mut Fonts) {
