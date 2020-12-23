@@ -7,6 +7,7 @@ mod shelf;
 mod book;
 mod bottom_bar;
 
+use std::fs;
 use std::mem;
 use std::thread;
 use std::sync::mpsc;
@@ -813,6 +814,8 @@ impl Home {
 
             let mut entries = Vec::new();
 
+            entries.push(EntryKind::Command("Delete".to_string(), EntryId::Delete(path.clone())));
+
             if let Some(parent) = path.parent() {
                 entries.push(EntryKind::Command("Select Parent".to_string(),
                                                 EntryId::SelectDirectory(context.library.home.join(parent))));
@@ -1288,6 +1291,13 @@ impl View for Home {
             },
             Event::Select(EntryId::Flush) => {
                 self.flush(context);
+                true
+            },
+            Event::Select(EntryId::Delete(ref path)) => {
+                match fs::remove_file(context.library.home.join(path)) {
+                    Ok(()) => self.clean_up(hub, context),
+                    Err(e) => eprintln!("Error deleting {:?}: {}", path, e),
+                };
                 true
             },
             Event::AddDocument(ref info) => {

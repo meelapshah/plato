@@ -447,6 +447,7 @@ pub enum EntryId {
     Load(PathBuf),
     Flush,
     Save,
+    Delete(PathBuf),
     Import,
     CleanUp,
     Sort(SortMethod),

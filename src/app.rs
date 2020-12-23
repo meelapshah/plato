@@ -1136,6 +1136,14 @@ pub fn run() -> Result<(), Error> {
                 exit_status = ExitStatus::QuitToXochitl;
                 break;
             },
+            Event::Select(EntryId::Delete(_)) => {
+                if view.is::<Home>() {
+                    view.handle_event(&evt, &tx, &mut bus, &mut context);
+                } else {
+                    let (tx, _rx) = mpsc::channel();
+                    history[0].view.handle_event(&evt, &tx, &mut VecDeque::new(), &mut context);
+                };
+            }
             Event::Select(EntryId::RebootInNickel) => {
                 fs::remove_file("bootlock").map_err(|e| {
                     eprintln!("Couldn't remove the bootlock file: {}", e);

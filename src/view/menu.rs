@@ -9,7 +9,7 @@ use crate::framebuffer::{Framebuffer, UpdateMode};
 use super::filler::Filler;
 use super::menu_entry::MenuEntry;
 use super::common::locate_by_id;
-use super::{View, Event, Hub, Bus, EntryKind, ViewId, CLOSE_IGNITION_DELAY};
+use super::{View, Event, Hub, Bus, EntryKind, EntryId, ViewId, CLOSE_IGNITION_DELAY};
 use super::{SMALL_BAR_HEIGHT, THICKNESS_MEDIUM, THICKNESS_LARGE, BORDER_RADIUS_MEDIUM};
 use crate::app::Context;
 
@@ -235,8 +235,16 @@ impl View for Menu {
     fn handle_event(&mut self, evt: &Event, hub: &Hub, bus: &mut Bus, context: &mut Context) -> bool {
         match *evt {
             Event::Select(ref entry_id) if self.root => {
-                self.handle_event(&Event::PropagateSelect(entry_id.clone()), hub, bus, context);
-                false
+                match entry_id {
+                    EntryId::Delete(_) => {
+                        hub.send(evt.clone()).ok();
+                        true
+                    },
+                    _ => {
+                        self.handle_event(&Event::PropagateSelect(entry_id.clone()), hub, bus, context);
+                        false
+                    }
+                }
             },
             Event::PropagateSelect(..) => {
                 for c in &mut self.children {
